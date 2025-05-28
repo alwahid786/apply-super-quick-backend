@@ -3,6 +3,7 @@ import { Permission } from "../models/permission.model.js";
 import { Role } from "../models/role.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { CustomError } from "../utils/customError.js";
+import mongoose from "mongoose";
 
 // create new role
 // ----------------
@@ -13,6 +14,7 @@ const createRole = asyncHandler(async (req, res, next) => {
   if (!Array.isArray(permissions)) return next(new CustomError(400, "Permissions should be an array"));
   // remove dublicate
   permissions = [...new Set(permissions.map((permission) => String(permission)))];
+  // now convert permission in mongodb objectIds
   permissions.forEach((permission) => {
     if (!isValidObjectId(permission)) return next(new CustomError(400, "Invalid Id detected in permissions"));
   });

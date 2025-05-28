@@ -13,7 +13,7 @@ const createUser = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please Provide all fields"));
   const [user, roleExist] = await Promise.all([Auth.findOne({ email }), Role.findOne({ name: role })]);
   if (user?._id) return next(new CustomError(403, "Email Already Exists"));
-  if (!roleExist) return next(new CustomError(404, `Role ${role} Not Exist Please create First`));
+  if (!roleExist?._id) return next(new CustomError(404, `Role ${role} Not Exist Please create First`));
   const newUser = await Auth.create({ firstName, lastName, email, password, role: roleExist?._id });
   if (!newUser) return next(new CustomError(400, "Error While Creating User"));
   res.status(201).json({ success: true, message: "User Created Successfully" });

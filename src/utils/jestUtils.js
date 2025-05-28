@@ -4,7 +4,7 @@ import { getEnv } from "../configs/config.js";
 import { addPermissionsIntoDB } from "../configs/permissions.js";
 import { Auth } from "../models/auth.model.js";
 import { Role } from "../models/role.model.js";
-import { adminUserForTest, guestUerForTest } from "../tests/globalDataForJest.js";
+import { adminUserForTest, guestUserForTest } from "../tests/globalDataForJest.js";
 
 let allPermissions = { create: [], delete: [], read: [], update: [] };
 let mongoServer;
@@ -30,7 +30,7 @@ const beforeTestFunction = async () => {
     ];
     const [adminUser, guestUser] = await Promise.all([
       createUserWithAdminRoleWithAllPermissions(adminUserForTest),
-      createUserWithAdminRoleWithAllPermissions(guestUerForTest),
+      createUserWithAdminRoleWithAllPermissions(guestUserForTest),
     ]);
     if (!adminUser) throw new Error("Error While Creating adminUser");
     if (!guestUser) throw new Error("Error While Creating guestUser");

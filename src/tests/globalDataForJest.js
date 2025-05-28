@@ -6,7 +6,7 @@ const adminUserForTest = {
   password: "admin",
   permissions: [],
 };
-const guestUerForTest = {
+const guestUserForTest = {
   firstName: "guest",
   lastName: "guest",
   email: "guest@example.com",
@@ -14,4 +14,4 @@ const guestUerForTest = {
   password: "guest",
   permissions: [],
 };
-export { adminUserForTest, guestUerForTest };
+export { adminUserForTest, guestUserForTest };

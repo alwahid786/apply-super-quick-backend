@@ -1,8 +1,8 @@
 const authTestData = {
-  firstName: "user1",
-  lastName: "test",
-  email: "user1@gmail.com",
-  role: "admin",
+  firstName: "user",
+  lastName: "user",
+  email: "user@gmail.com",
+  role: "user",
   wrongEmail: "wrongtest@test.com",
   failEmail: "failtest@test.com",
   uniqueEmail: "uniqueuser@test.com",
