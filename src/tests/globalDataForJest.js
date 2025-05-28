@@ -1,8 +1,17 @@
 const adminUserForTest = {
-  firstName: "AdminForTest",
-  lastName: "AdminForTest",
-  email: "AdminForTest@example.com",
+  firstName: "admin",
+  lastName: "admin",
+  email: "admin@example.com",
   role: "admin",
-  password: "12345678",
+  password: "admin",
+  permissions: [],
 };
-export { adminUserForTest };
+const guestUerForTest = {
+  firstName: "guest",
+  lastName: "guest",
+  email: "guest@example.com",
+  role: "guest",
+  password: "guest",
+  permissions: [],
+};
+export { adminUserForTest, guestUerForTest };

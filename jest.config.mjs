@@ -1,3 +1,3 @@
 export default {
-  setupFilesAfterEnv: ["<rootDir>/src/tests/setup.js"],
+  setupFilesAfterEnv: ["<rootDir>/src/tests/jest.setup.js"],
 };

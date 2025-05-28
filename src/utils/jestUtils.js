@@ -1,56 +1,87 @@
+import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
-import { asyncHandler } from "./asyncHandler.js";
+import { getEnv } from "../configs/config.js";
+import { addPermissionsIntoDB } from "../configs/permissions.js";
 import { Auth } from "../models/auth.model.js";
 import { Role } from "../models/role.model.js";
-import { CustomError } from "../utils/customError.js";
-import { getEnv } from "../configs/config.js";
+import { adminUserForTest, guestUerForTest } from "../tests/globalDataForJest.js";
+
+let allPermissions = { create: [], delete: [], read: [], update: [] };
+let mongoServer;
 
 // before we start testing testing
 const beforeTestFunction = async () => {
   try {
     process.env.NODE_ENV = "test";
     await mongoose.disconnect();
-    const testDbUrl = getEnv("MONGODB_URL_TEST");
-    const testDbName = getEnv("MONGODB_NAME_TEST");
-    const res = await mongoose.connect(testDbUrl, { dbName: testDbName });
+    mongoServer = await MongoMemoryServer.create();
+    const testDbName = getEnv("MONGODB_NAME")?.concat("-test");
+    const mongoUrl = mongoServer.getUri();
+    const res = await mongoose.connect(mongoUrl, { dbName: testDbName });
     if (!res.connection.readyState === 1) return console.error("BEFORE TEST :Failed to connect to DB");
-    if (mongoose?.connection?.db?.databaseName == testDbName) {
-      await mongoose.connection.dropDatabase();
-      console.log(`BEFORE TEST :${res?.connection?.db?.databaseName} connected and  dropped successfully`);
-    }
+    if (mongoose?.connection?.db?.databaseName == testDbName)
+      console.log(`BEFORE TEST :${res?.connection?.db?.databaseName} connected successfully`);
+    allPermissions = await addPermissionsIntoDB();
+    adminUserForTest.permissions = [
+      ...allPermissions?.read,
+      ...allPermissions?.create,
+      ...allPermissions?.delete,
+      ...allPermissions?.update,
+    ];
+    const [adminUser, guestUser] = await Promise.all([
+      createUserWithAdminRoleWithAllPermissions(adminUserForTest),
+      createUserWithAdminRoleWithAllPermissions(guestUerForTest),
+    ]);
+    if (!adminUser) throw new Error("Error While Creating adminUser");
+    if (!guestUser) throw new Error("Error While Creating guestUser");
   } catch (error) {
-    console.error("BEFORE TEST :Failed to complete before all func in testing:", error);
-    process.exit(1);
+    console.log("BEFORE TEST :Failed to complete before all func in testing:", error);
   }
 };
 // after we start testing testing
 const afterTestFunction = async () => {
   try {
     const dbName = mongoose?.connection?.db?.databaseName;
-    await mongoose.connection.dropDatabase();
-    if (dbName == getEnv("MONGODB_NAME_TEST")) {
+    const testDbName = getEnv("MONGODB_NAME")?.concat("-test");
+    if (dbName == testDbName) {
       await mongoose.disconnect();
-      console.log(`AFTER TEST : ${dbName} connection closed and dropped successfully`);
+      await mongoServer.stop();
+      console.log(`AFTER TEST : ${dbName} connection closed successfully`);
     }
   } catch (error) {
-    console.error("AFTER TEST :Failed to complete after all func in testing:", error);
-    process.exit(1);
+    console.log("AFTER TEST :Failed to complete after all func in testing:", error);
   }
 };
 
-const createUserWithOutAuthorizing = async ({ firstName, lastName, email, password, role }) => {
+// create a sample user for testing before we start testing
+const createUserWithAdminRoleWithAllPermissions = async ({
+  firstName,
+  lastName,
+  email,
+  password,
+  role,
+  permissions,
+}) => {
   try {
-    if (!firstName || !lastName || !email || !password || !role) return false;
-    const [user, roleExist] = await Promise.all([Auth.findOne({ email }), Role.findOne({ name: role })]);
-    if (user?._id) return false;
-    if (!roleExist) return false;
-    const newUser = await Auth.create({ firstName, lastName, email, password, role: roleExist?._id });
-    if (!newUser) return false;
-    return true;
+    let roleId;
+    if (!firstName || !lastName || !email || !password || !role || !permissions) return false;
+    // check user and role exist or not
+    const [isUserExist, isRoleExist] = await Promise.all([Auth.findOne({ email }), Role.findOne({ name: role })]);
+    if (isUserExist) throw new Error("Email Already Exists");
+    // if role not exist then create role and save id
+    if (!isRoleExist) {
+      const createRole = await Role.create({ name: role, permissions });
+      if (!createRole) throw new Error("Error While Creating Role");
+      roleId = createRole?._id;
+    } else roleId = isRoleExist?._id;
+    // then create a new user admin with all permissions
+    const user = await Auth.create({ firstName, lastName, email, password, role: roleId });
+    if (!user) throw new Error("Error While Creating User");
+    return user;
   } catch (error) {
     console.log("error while creating user in testing", error);
     return false;
   }
 };
 
-export { afterTestFunction, beforeTestFunction, createUserWithOutAuthorizing };
+export { afterTestFunction, allPermissions, beforeTestFunction, createUserWithAdminRoleWithAllPermissions };
