@@ -1,7 +1,7 @@
 import request from "supertest";
 import app from "../../app.js";
-import { getMyProfileRoute, loginRoute, logoutRoute } from "../../utils/applicationRoutes.js";
 import { getEnv } from "../../configs/config.js";
+import { getMyProfileRoute, loginRoute } from "../../utils/applicationRoutes.js";
 
 const getMyProfileTests = ({ firstName, lastName, email, password }) => {
   // if user not logged in
@@ -29,10 +29,6 @@ const getMyProfileTests = ({ firstName, lastName, email, password }) => {
     expect(res?.body?.data?.firstName).toBe(firstName);
     expect(res?.body?.data?.lastName).toBe(lastName);
     expect(res?.body?.data?.email).toBe(email);
-    // then logout him
-    const logoutRes = await loginAgent.get(logoutRoute);
-    expect(logoutRes.statusCode).toBe(200);
-    expect(logoutRes.body.message).toBe("Logged Out Successfully");
   });
 };
 

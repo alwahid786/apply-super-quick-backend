@@ -2,8 +2,10 @@ import request from "supertest";
 import app from "../../app.js";
 import { getEnv } from "../../configs/config.js";
 import { loginRoute, updateMyProfileRoute } from "../../utils/applicationRoutes.js";
+import { Auth } from "../../models/auth.model.js";
+import { Role } from "../../models/role.model.js";
 
-const updateMyProfileTests = ({ firstName, lastName, email, password }) => {
+const updateMyProfileTests = ({ firstName, lastName, role, email, password }, adminUserForTest) => {
   let loginAgent;
   // if user not logged in
   // ---------------------
@@ -13,10 +15,21 @@ const updateMyProfileTests = ({ firstName, lastName, email, password }) => {
     expect(res?.body?.message).toBe("Please Login First");
   });
 
-  //  login user for update profile
+  // create user for update profile and login from his profile
   // ---------------------
   it("should return 200 if user logged in", async () => {
     loginAgent = request.agent(app);
+    const [isExistUser, isExistRole] = await Promise.all([Auth.findOne({ email }), Role.findOne({ name: role })]);
+    if (!isExistRole) await Role.create({ name: role, permissions: allPermissions.read });
+    if (!isExistUser) {
+      const { email: adminEmail, password: adminPass } = adminUserForTest;
+      const res = await loginAgent.post(loginRoute).send({ email: adminEmail, password: adminPass });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.message).toBe("Logged In Successfully");
+      const resCreate = await loginAgent.post(createUserRoute).send({ firstName, lastName, role, email, password });
+      expect(resCreate.statusCode).toBe(201);
+      expect(resCreate.body.message).toBe("User Created Successfully");
+    }
     const loginRes = await loginAgent.post(loginRoute).send({ email, password });
     expect(loginRes.statusCode).toBe(200);
     expect(loginRes.body.message).toBe("Logged In Successfully");
