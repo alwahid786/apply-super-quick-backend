@@ -4,6 +4,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import AuthRoutes from "./routes/auth.routes.js";
 import RoleRoutes from "./routes/role.routes.js";
 import UserRoutes from "./routes/user.routes.js";
+import FormRoutes from "./routes/form.routes.js";
 import cors from "cors";
 import { addPermissionsIntoDB } from "./configs/permissions.js";
 import { getEnv } from "./configs/config.js";
@@ -29,6 +30,7 @@ app.get("/", (req, res) => res.status(200).json({ success: true, message: "Hello
 app.use("/api/auth", AuthRoutes);
 app.use("/api/role", RoleRoutes);
 app.use("/api/user", UserRoutes);
+app.use("/api/form", FormRoutes);
 
 // error handler
 app.use(errorHandler);

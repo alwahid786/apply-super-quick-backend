@@ -1,14 +1,21 @@
 import { Permission } from "../models/permission.model.js";
 
 const webPermissions = Object.freeze({
+  // user
   create_user: "create_user",
   update_user: "update_user",
   delete_user: "delete_user",
   read_user: "read_user",
+  // role
   create_role: "create_role",
   update_role: "update_role",
   delete_role: "delete_role",
   read_role: "read_role",
+  // form
+  create_form: "create_form",
+  delete_form: "delete_form",
+  read_form: "read_form",
+  submit_form: "submit_form",
 });
 
 const addPermissionsIntoDB = async () => {

@@ -46,6 +46,7 @@ const isAuthorized = (permissionName) => {
       const userId = req?.user?._id;
       if (!isValidObjectId(userId)) return next(new CustomError(400, "Invalid User Id"));
       const user = await Auth.findById(userId).populate({ path: "role", populate: { path: "permissions" } });
+      if (user.role.name == "admin") return next();
       const hasPermission = user?.role?.permissions?.some((p) => p.name == permissionName);
       if (!hasPermission) return next(new CustomError(403, "You are not authorized to perform this action"));
       return next();
