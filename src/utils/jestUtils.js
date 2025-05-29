@@ -4,7 +4,7 @@ import { getEnv } from "../configs/config.js";
 import { addPermissionsIntoDB } from "../configs/permissions.js";
 import { Auth } from "../models/auth.model.js";
 import { Role } from "../models/role.model.js";
-import { adminUserForTest, guestUserForTest } from "../tests/globalDataForJest.js";
+import { adminUserForTest, guestUserForTest } from "../tests/global/jetsData.js";
 
 let allPermissions = { create: [], delete: [], read: [], update: [] };
 let mongoServer;
@@ -45,7 +45,7 @@ const afterTestFunction = async () => {
     const testDbName = getEnv("MONGODB_NAME")?.concat("-test");
     if (dbName == testDbName) {
       await mongoose.disconnect();
-      await mongoServer.stop();
+      if (mongoServer) await mongoServer.stop();
       console.log(`AFTER TEST : ${dbName} connection closed successfully`);
     }
   } catch (error) {

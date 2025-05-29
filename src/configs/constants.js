@@ -4,6 +4,7 @@ import { getEnv } from "./config.js";
 
 export const __dirName = fileURLToPath(import.meta.url);
 export const __fileName = path.dirname(__dirName);
+export const __root = path.join(__fileName, "../..");
 
 const isDev = getEnv("NODE_ENV") == "development" || getEnv("NODE_ENV") == "test";
 

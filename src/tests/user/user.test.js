@@ -1,4 +1,4 @@
-import { adminUserForTest, guestUserForTest } from "../globalDataForJest.js";
+import { adminUserForTest, guestUserForTest } from "../global/jetsData.js";
 import { createUserTests } from "./createUser.js";
 import { createUserData } from "./user.data.js";
 

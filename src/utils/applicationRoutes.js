@@ -7,9 +7,9 @@ export const getMyProfileRoute = "/api/auth/me";
 export const updateMyProfileRoute = "/api/auth/me";
 // ROLE
 export const createRoleRoute = "/api/role/create";
-export const singleRoleRoute = "/api/role/single/:roleId";
+export const singleRoleRoute = "/api/role/single";
 export const getAllRoles = "/api/role/all";
 // USER
 export const createUserRoute = "/api/user/create";
 export const getAllUsersRoute = "/api/user/all";
-export const singleUserRoute = "/api/user/single/:userId";
+export const singleUserRoute = "/api/user/single";
