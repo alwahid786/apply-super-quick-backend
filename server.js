@@ -1,7 +1,7 @@
 import app from "./src/app.js";
 import { getEnv } from "./src/configs/config.js";
 import { connectDB } from "./src/configs/connectDb.js";
-import { configureCloudinary } from "./src/utils/cloudinary.js";
+import { configureCloudinary } from "./src/global/utils/cloudinary.js";
 
 const port = getEnv("PORT");
 

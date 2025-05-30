@@ -1,8 +1,8 @@
 import { getEnv } from "../configs/config.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { CustomError } from "../utils/customError.js";
-import { Auth } from "../models/auth.model.js";
-import { JWTService } from "../utils/jwtService.js";
+import { asyncHandler } from "../global/utils/asyncHandler.js";
+import { CustomError } from "../global/utils/customError.js";
+import { Auth } from "../modules/auth/schemas/auth.model.js";
+import { JWTService } from "../global/utils//jwtService.js";
 import { accessTokenOptions } from "../configs/constants.js";
 import { isValidObjectId } from "mongoose";
 

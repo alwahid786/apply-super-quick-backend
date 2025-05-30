@@ -1,12 +1,11 @@
 import cookieParser from "cookie-parser";
 import express from "express";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import AuthRoutes from "./routes/auth.routes.js";
-import RoleRoutes from "./routes/role.routes.js";
-import UserRoutes from "./routes/user.routes.js";
-import FormRoutes from "./routes/form.routes.js";
+import AuthRoutes from "./modules/auth/routes/auth.routes.js";
+import RoleRoutes from "./modules/role/routes/role.routes.js";
+import UserRoutes from "./modules/user/routes/user.routes.js";
+import FormRoutes from "./modules/form/routes/form.routes.js";
 import cors from "cors";
-import { addPermissionsIntoDB } from "./configs/permissions.js";
 import { getEnv } from "./configs/config.js";
 
 const app = express();

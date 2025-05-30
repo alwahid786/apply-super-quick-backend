@@ -1,4 +1,4 @@
-import { Permission } from "../models/permission.model.js";
+import { Permission } from "../global/schemas/permission.model.js";
 
 const webPermissions = Object.freeze({
   // user
