@@ -1,31 +1,96 @@
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
+import { initializeSession } from "../utils/idMission.js";
+
+const messageStore = new Map();
+const verificationStore = new Map();
 
 // create id mission session
 // ------------------------
 const createIdMissionSession = asyncHandler(async (req, res, next) => {
-  if (!req?.body) return next(new CustomError(400, "Please Provide all fields"));
-  const { sessionId, email, name, phone } = req.body;
-  if (!email || !name || !phone) return next(new CustomError(400, "Please Provide all fields"));
-  if (!sessionId) return next(new CustomError(400, "Session ID is required"));
-  // Initialize a session with IDMission
-  const sessionResult = await initializeSession(true, { email, name, phone });
-  if (!sessionResult.success) return next(new CustomError(400, "Failed to initialize ID verification session"));
-  // Extract the portal session details
-  const portalSession = sessionResult?.portalSession || {};
-  // Return the necessary information for the client
-  return res.status(200).json({
-    success: true,
-    message: "ID verification session created successfully",
-    sessionId: sessionResult?.sessionId,
-    idMissionSessionId: portalSession?.id,
-    webUrl: portalSession?.web_url || portalSession?.verification_urls?.web,
-    mobileUrl: portalSession?.mobile_url || portalSession?.verification_urls?.mobile,
-    emailVerificationUrl: sessionResult?.verificationUrls?.emailVerificationUrl,
-    phoneVerificationUrl: sessionResult?.verificationUrls?.phoneVerificationUrl,
-  });
-});
+  if (!req?.body) return next(new CustomError(400, "Please provide all required fields"));
 
+  const { email, name, phone } = req.body;
+  if (!email || !name || !phone) {
+    return next(new CustomError(400, "Email, name, and phone are required"));
+  }
+  try {
+    const sessionResult = await initializeSession(true, { email, name, phone }, req);
+    if (!sessionResult.success)
+      return next(new CustomError(400, sessionResult.error || "Failed to initialize ID verification session"));
+    const portalSession = sessionResult?.portalSession || {};
+    return res.status(200).json({
+      success: true,
+      message: "ID verification session created successfully",
+      sessionId: sessionResult?.sessionId,
+      idMissionSessionId: portalSession?.id,
+      webUrl: portalSession?.web_url || portalSession?.verification_urls?.web || portalSession?.url,
+      mobileUrl:
+        portalSession?.mobile_url || portalSession?.verification_urls?.mobile || portalSession?.mobile_verification_url,
+      emailVerificationUrl: sessionResult?.verificationUrls?.emailVerificationUrl,
+      phoneVerificationUrl: sessionResult?.verificationUrls?.phoneVerificationUrl,
+      customerId: sessionResult?.customerId,
+      contactVerificationEnabled: sessionResult?.contactVerificationEnabled,
+      apiCredentials: {
+        loginId: sessionResult?.loginId,
+        apiKey: sessionResult?.apiKey,
+        keyId: sessionResult?.apiKeyId,
+      },
+    });
+  } catch (error) {
+    console.error("Error in createIdMissionSession:", error);
+    return next(new CustomError(500, "Internal server error during session creation"));
+  }
+});
+// verify email
+// ------------
+const verifyEmail = asyncHandler(async (req, res, next) => {
+  const { token, email, sessionId } = req.query;
+  const key = `${sessionId}_${token}`;
+  if (!verificationStore.has(key)) {
+    verificationStore.set(key, {
+      sessionId,
+      email,
+      phone: null,
+      emailVerified: false,
+      phoneVerified: false,
+      token,
+      createdAt: new Date(),
+    });
+  }
+  const verification = verificationStore.get(key);
+  verification.emailVerified = true;
+  verification.emailVerifiedAt = new Date();
+  console.log(`Redirecting to /verification-success?type=email&sessionId=${sessionId}`);
+  // res.redirect(`/verification-success?type=email&sessionId=${sessionId}`);
+  return res.status(200).json({ success: true, message: "Email verified successfully" });
+});
+// verify phone
+// ------------
+const verifyPhone = asyncHandler(async (req, res, next) => {
+  const { token, email, sessionId } = req.query;
+  const key = `${sessionId}_${token}`;
+
+  if (!verificationStore.has(key)) {
+    verificationStore.set(key, {
+      sessionId,
+      email: null,
+      phone,
+      emailVerified: false,
+      phoneVerified: false,
+      token,
+      createdAt: new Date(),
+    });
+  }
+
+  const verification = verificationStore.get(key);
+  verification.phoneVerified = true;
+  verification.phoneVerifiedAt = new Date();
+
+  console.log(`Phone verified for session: ${sessionId}`);
+
+  return res.status(200).json({ success: true, message: "Phone verified successfully" });
+});
 // get result from id mission
 // -------------------------
 const getIdMissionResult = asyncHandler(async (req, res, next) => {
@@ -49,4 +114,4 @@ const getIdMissionResult = asyncHandler(async (req, res, next) => {
   });
 });
 
-export { createIdMissionSession, getIdMissionResult };
+export { createIdMissionSession, getIdMissionResult, verifyEmail, verifyPhone };
