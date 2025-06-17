@@ -3,7 +3,10 @@ import { imageSchema } from "../../../global/schemas/global.model.js";
 
 const formSchema = new mongoose.Schema({
   id: { type: String },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
   name: { type: String, required: true },
+  branding: { type: mongoose.Schema.Types.ObjectId, ref: "Branding", default: null },
+  brandingType: { type: String, default: "default" },
   description: { type: String },
   logo: { type: imageSchema },
   companyName: { type: String },

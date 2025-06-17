@@ -1,14 +1,16 @@
 import cookieParser from "cookie-parser";
 import express from "express";
 import { errorHandler } from "./middlewares/errorHandler.js";
-import AuthRoutes from "./modules/auth/routes/auth.routes.js";
-import RoleRoutes from "./modules/role/routes/role.routes.js";
-import UserRoutes from "./modules/user/routes/user.routes.js";
-import FormRoutes from "./modules/form/routes/form.routes.js";
-import IdMissionRoutes from "./modules/idMission/routes/idMission.routes.js";
+import AuthRoutes from "./modules/auth/routes/auth.route.js";
+import RoleRoutes from "./modules/role/routes/role.route.js";
+import UserRoutes from "./modules/user/routes/user.route.js";
+import FormRoutes from "./modules/form/routes/form.route.js";
+import IdMissionRoutes from "./modules/idMission/routes/idMission.route.js";
+import BrandingRoutes from "./modules/branding/routes/branding.route.js";
 import cors from "cors";
 import { getEnv } from "./configs/config.js";
 import { markEmailVerified } from "./modules/idMission/utils/verification.js";
+import { addPermissionsIntoDB } from "./configs/permissions.js";
 
 const app = express();
 
@@ -40,6 +42,7 @@ app.use("/api/role", RoleRoutes);
 app.use("/api/user", UserRoutes);
 app.use("/api/form", FormRoutes);
 app.use("/api/id-mission", IdMissionRoutes);
+app.use("/api/branding", BrandingRoutes);
 
 // error handler
 app.use(errorHandler);

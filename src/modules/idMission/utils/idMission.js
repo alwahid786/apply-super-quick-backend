@@ -44,6 +44,30 @@ const IDMISSION_API_KEY = getEnv("IDMISSION_API_KEY") || "";
 const IDMISSION_KEY_ID = getEnv("IDMISSION_KEY_ID") || "";
 const IDMISSION_API_SECRET = getEnv("IDMISSION_API_SECRET") || "";
 
+export async function createIDmissionSession(product = "biometric", environment = "TEST") {
+  try {
+    const response = await axios.post(
+      process.env.IDMISSION_API_URL,
+      {
+        client_id: IDMISSION_KEY_ID,
+        client_key: IDMISSION_API_KEY,
+        product,
+        environment,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("IDmission session error:", error.response?.data || error.message);
+    throw new Error("Failed to create IDmission session");
+  }
+}
+
 export async function initializeSession(useWebSdk = true, contactInfo, req) {
   const timestamp = Date.now();
   const customerId = `customer_${timestamp}`;

@@ -22,12 +22,13 @@
     "csv-parse": "^5.6.0",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
+    "get-image-colors": "^4.0.1",
     "idmission-web-sdk": "^2.2.164",
-    "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.7.0",
     "multer": "^2.0.0",
     "nodemailer": "^7.0.3",
+    "puppeteer": "^24.10.1",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {

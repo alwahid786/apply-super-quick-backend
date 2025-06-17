@@ -49,6 +49,8 @@ const config = Object.freeze({
   IDMISSION_KEY_ID: process.env.IDMISSION_KEY_ID,
   IDMISSION_BASE_URL: process.env.IDMISSION_BASE_URL,
   SESSION_SECRET: process.env.SESSION_SECRET,
+
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 });
 
 const getEnv = (key) => {
