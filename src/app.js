@@ -11,6 +11,7 @@ import cors from "cors";
 import { getEnv } from "./configs/config.js";
 import { markEmailVerified } from "./modules/idMission/utils/verification.js";
 import { addPermissionsIntoDB } from "./configs/permissions.js";
+import morgan from "morgan";
 
 const app = express();
 
@@ -20,10 +21,11 @@ const app = express();
 app.use(
   cors({
     credentials: true,
-    origin: [...getEnv("CORS_URLS")],
-    methods: ["GET", "P `OST", "PUT", "PATCH", "DELETE"],
+    origin: [getEnv("FRONTEND_URL")],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

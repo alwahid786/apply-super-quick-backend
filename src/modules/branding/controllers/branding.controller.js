@@ -8,8 +8,8 @@ import { fetchBranding } from "../utils/extractTheme.js";
 const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
   const { url } = req.query;
   if (!url) return next(new CustomError(400, "Please Provide url"));
-  // const data = await fetchBranding(url);
-  return res.status(200).json({ success: true, data: [] });
+  const data = await fetchBranding(url);
+  return res.status(200).json({ success: true, data: data });
 });
 
 // create branding
