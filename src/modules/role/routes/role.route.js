@@ -2,6 +2,7 @@ import express from "express";
 import {
   createRole,
   deleteSingleRole,
+  getAllPermissions,
   getAllRoles,
   getSingleRole,
   updateSingleRole,
@@ -21,5 +22,7 @@ app
   .get(isAuthenticated, isAuthorized(read_role), getSingleRole)
   .put(isAuthenticated, isAuthorized(update_role), updateSingleRole)
   .delete(isAuthenticated, isAuthorized(delete_role), deleteSingleRole);
+
+app.get("/permissions", isAuthenticated, getAllPermissions);
 
 export default app;

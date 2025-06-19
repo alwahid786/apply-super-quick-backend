@@ -85,4 +85,12 @@ const deleteSingleRole = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message: "Role Deleted Successfully" });
 });
 
-export { createRole, getAllRoles, getSingleRole, updateSingleRole, deleteSingleRole };
+// get all permissions
+// ------------------
+const getAllPermissions = asyncHandler(async (req, res, next) => {
+  const permissions = await Permission.find();
+  if (!permissions?.length) return next(new CustomError(400, "No Permissions Found"));
+  return res.status(200).json({ success: true, data: permissions });
+});
+
+export { createRole, getAllRoles, getSingleRole, updateSingleRole, deleteSingleRole, getAllPermissions };
