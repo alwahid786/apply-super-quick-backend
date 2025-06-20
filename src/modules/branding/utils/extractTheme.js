@@ -13,10 +13,12 @@ function rgbToHex(color) {
       .toUpperCase()
   );
 }
+
 export async function fetchBranding(url) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "networkidle2" });
+
   // 1) Computed styles
   const computed = await page.evaluate(() => {
     const cs = getComputedStyle(document.body);
@@ -26,29 +28,62 @@ export async function fetchBranding(url) {
     const lc = a && getComputedStyle(a).color;
     const frameEl = document.querySelector(".card, .panel, .frame, fieldset") || document.body;
     const fc = getComputedStyle(frameEl).borderColor;
-    const ff = cs.fontFamily.replace(/\"/g, ""); // Remove quotes from font family
+    const ff = cs.fontFamily.replace(/\"/g, "");
     return { backgroundColor: bc, textColor: tc, linkColor: lc, frameColor: fc, fontFamily: ff };
   });
+
   // 2) Screenshot palette (PNG)
   const buffer = await page.screenshot({ fullPage: true, type: "png" });
   const palette = await getColors(buffer, "image/png");
   const hexes = palette.map((c) => c.hex().toUpperCase());
-  // 3) Logo & title (before close)
-  const [logoUrl, name] = await Promise.all([
-    page.evaluate(() => {
-      const selectors = ["img[alt*=logo]", "img[src*=logo]", "link[rel=icon]", "meta[property='og:image']"];
-      for (const sel of selectors) {
-        const el = document.querySelector(sel);
-        if (el) return el.src || el.href || el.content;
-      }
-      return null;
-    }),
-    page.title(),
-  ]);
+
+  // 3) All possible logo elements with dimensions
+  const logos = await page.evaluate(() => {
+    const selectors = [
+      "img[alt*=logo]",
+      "img[src*=logo]",
+      "link[rel=icon]",
+      "meta[property='og:image']",
+      "img[src*='logo']",
+    ];
+    const elements = [];
+    selectors.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        let url = el.src || el.href || el.content;
+        if (url && !elements.find((e) => e.url === url)) {
+          elements.push({
+            url,
+            width: el.naturalWidth || el.width || null,
+            height: el.naturalHeight || el.height || null,
+          });
+        }
+      });
+    });
+    return elements;
+  });
+
+  // 4) Extract page-wide color palette
+  const colorPalette = await page.evaluate(() => {
+    const allElements = Array.from(document.querySelectorAll("*"));
+    const colors = new Set();
+    allElements.forEach((el) => {
+      const styles = getComputedStyle(el);
+      ["color", "backgroundColor", "borderColor"].forEach((prop) => {
+        const val = styles[prop];
+        if (val && val.startsWith("rgb")) {
+          colors.add(val);
+        }
+      });
+    });
+    return Array.from(colors).slice(0, 20);
+  });
+  const color_palette = [...new Set(colorPalette.map(rgbToHex))].slice(0, 10);
+
+  const name = await page.title();
   await browser.close();
-  // 4) Assemble theme with all hex colors
+
   return {
-    logo: logoUrl,
+    logos,
     name,
     url,
     colors: {
@@ -61,5 +96,6 @@ export async function fetchBranding(url) {
       frame: computed.frameColor ? rgbToHex(computed.frameColor) : null,
     },
     fontFamily: computed.fontFamily,
+    color_palette,
   };
 }
