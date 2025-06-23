@@ -21,7 +21,7 @@ const app = express();
 app.use(
   cors({
     credentials: true,
-    origin: [getEnv("FRONTEND_URL")],
+    origin: [getEnv("FRONTEND_URL"), "https://apply-super-quick.vercel.app"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
