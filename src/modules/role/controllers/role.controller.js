@@ -32,7 +32,7 @@ const createRole = asyncHandler(async (req, res, next) => {
 // get all roles
 // ------------
 const getAllRoles = asyncHandler(async (req, res, next) => {
-  const roles = await Role.find().select(["_id", "name"]);
+  const roles = await Role.find();
   if (!roles?.length) return next(new CustomError(400, "No Roles Found"));
   return res.status(200).json({ success: true, data: roles });
 });

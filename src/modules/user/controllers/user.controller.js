@@ -11,7 +11,7 @@ const createUser = asyncHandler(async (req, res, next) => {
   const { firstName, lastName, email, password, role } = req.body;
   if (!firstName || !lastName || !email || !password || !role)
     return next(new CustomError(400, "Please Provide all fields"));
-  const [user, roleExist] = await Promise.all([Auth.findOne({ email }), Role.findOne({ name: role })]);
+  const [user, roleExist] = await Promise.all([Auth.findOne({ email }), Role.findById(role)]);
   if (user?._id) return next(new CustomError(403, "Email Already Exists"));
   if (!roleExist?._id) return next(new CustomError(404, `Role ${role} Not Exist Please create First`));
   const newUser = await Auth.create({ firstName, lastName, email, password, role: roleExist?._id });
@@ -22,7 +22,7 @@ const createUser = asyncHandler(async (req, res, next) => {
 // get all users
 // ------------
 const getAllUsers = asyncHandler(async (req, res, next) => {
-  const users = await Auth.find();
+  const users = await Auth.find().populate({ path: "role" });
   if (!users?.length) return next(new CustomError(400, "No Users Found"));
   return res.status(200).json({ success: true, data: users });
 });
@@ -51,7 +51,7 @@ const updateSingleUser = asyncHandler(async (req, res, next) => {
   if (email) user.email = email;
   if (password) user.password = password;
   if (role) {
-    const roleExist = await Role.findOne({ name: role });
+    const roleExist = await Role.findById(role);
     if (!roleExist) return next(new CustomError(404, `Role ${role} Not Exist Please create First`));
     user.role = roleExist?._id;
   }
