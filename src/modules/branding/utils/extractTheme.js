@@ -18,7 +18,6 @@ export async function fetchBranding(url) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "networkidle2" });
-
   // 1) Computed styles
   const computed = await page.evaluate(() => {
     const cs = getComputedStyle(document.body);
@@ -31,37 +30,74 @@ export async function fetchBranding(url) {
     const ff = cs.fontFamily.replace(/\"/g, "");
     return { backgroundColor: bc, textColor: tc, linkColor: lc, frameColor: fc, fontFamily: ff };
   });
-
   // 2) Screenshot palette (PNG)
   const buffer = await page.screenshot({ fullPage: true, type: "png" });
   const palette = await getColors(buffer, "image/png");
   const hexes = palette.map((c) => c.hex().toUpperCase());
-
   // 3) All possible logo elements with dimensions
   const logos = await page.evaluate(() => {
-    const selectors = [
-      "img[alt*=logo]",
-      "img[src*=logo]",
-      "link[rel=icon]",
-      "meta[property='og:image']",
-      "img[src*='logo']",
-    ];
     const elements = [];
-    selectors.forEach((sel) => {
+    // Collect <img> tags with logo indicators
+    const imgSelectors = ["img[alt*='logo' i]", "img[src*='logo' i]", "img[class*='logo' i]", "img[id*='logo' i]"];
+    imgSelectors.forEach((sel) => {
       document.querySelectorAll(sel).forEach((el) => {
-        let url = el.src || el.href || el.content;
-        if (url && !elements.find((e) => e.url === url)) {
+        if (el.src) {
           elements.push({
-            url,
+            type: "img",
+            url: el.src,
             width: el.naturalWidth || el.width || null,
             height: el.naturalHeight || el.height || null,
           });
         }
       });
     });
-    return elements;
+    // Collect favicon
+    const icon = document.querySelector("link[rel~='icon']");
+    if (icon && icon.href) {
+      elements.push({ type: "icon", url: icon.href, width: null, height: null });
+    }
+    // Collect og:image meta
+    const ogImg = document.querySelector("meta[property='og:image']");
+    if (ogImg && ogImg.content) {
+      elements.push({ type: "og:image", url: ogImg.content, width: null, height: null });
+    }
+    // Collect background images on elements with logo-like classes
+    document.querySelectorAll("[class*='logo' i], [id*='logo' i]").forEach((el) => {
+      const bg = window.getComputedStyle(el).backgroundImage;
+      const urlMatch = bg && bg.match(/url\(["']?(.*?)["']?\)/);
+      if (urlMatch && urlMatch[1]) {
+        elements.push({
+          type: "background",
+          url: urlMatch[1],
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+        });
+      }
+    });
+    // Inline SVGs
+    document.querySelectorAll("svg").forEach((svgEl) => {
+      const outer = svgEl.outerHTML;
+      const isLogoLike = /logo/i.test(svgEl.className?.baseVal || "") || /logo/i.test(svgEl.id || "");
+      if (isLogoLike) {
+        elements.push({
+          type: "inline-svg",
+          url: "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(outer))),
+          width: svgEl.clientWidth || null,
+          height: svgEl.clientHeight || null,
+        });
+      }
+    });
+    // Remove duplicates by URL
+    const unique = [];
+    const seen = new Set();
+    for (const el of elements) {
+      if (!seen.has(el.url)) {
+        seen.add(el.url);
+        unique.push(el);
+      }
+    }
+    return unique;
   });
-
   // 4) Extract page-wide color palette
   const colorPalette = await page.evaluate(() => {
     const allElements = Array.from(document.querySelectorAll("*"));
@@ -78,10 +114,8 @@ export async function fetchBranding(url) {
     return Array.from(colors).slice(0, 20);
   });
   const color_palette = [...new Set(colorPalette.map(rgbToHex))].slice(0, 10);
-
   const name = await page.title();
   await browser.close();
-
   return {
     logos,
     name,
