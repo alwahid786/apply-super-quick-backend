@@ -1,6 +1,6 @@
 import { parse } from "csv-parse/sync";
 
-const convertCsvToActualDataForForm = (csvFile) => {
+const convertCsvToAsctualDataForForm = (csvFile) => {
   try {
     const csvData = csvFile.buffer.toString("utf-8");
     const records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true });
@@ -48,5 +48,73 @@ const convertCsvToActualDataForForm = (csvFile) => {
     return null;
   }
 };
+
+function convertCsvToActualDataForForm(csvInput) {
+  // Ensure it's a string for the CSV parser
+  const csvString = Buffer.isBuffer(csvInput) ? csvInput.toString("utf8") : csvInput;
+  // Synchronously parse CSV into row objects
+  const rows = parse(csvString, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  let formName = "";
+  let formDescription = "";
+  const sections = [];
+  let currentSection = null;
+
+  for (const row of rows) {
+    // 1) Forward-fill form-level properties
+    if (row.form_name) {
+      formName = row.form_name;
+    }
+    if (row.form_description) {
+      formDescription = row.form_description;
+    }
+
+    // 2) Detect and start a new section
+    const title = row.Section_title;
+    if (!title) continue; // skip rows without a section title
+
+    if (!currentSection || currentSection.title !== title) {
+      currentSection = {
+        title,
+        description: row.Section_description || "",
+        repeatable: String(row.Section_repeatable).toLowerCase() === "true",
+        minEntries: row.Section_min_entries ? Number(row.Section_min_entries) : null,
+        maxEntries: row.Section_max_entries ? Number(row.Section_max_entries) : null,
+        fields: [],
+      };
+      sections.push(currentSection);
+    }
+
+    // 3) Map field columns into a field object
+    const field = {
+      name: row.field_name || "",
+      label: row.field_label || "",
+      type: row.field_type || "",
+      required:
+        String(row.field_required).toLowerCase() === "required" || String(row.field_required).toLowerCase() === "true",
+      placeholder: row.field_placeholder || "",
+      options: row.field_options
+        ? row.field_options
+            .split(";")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+      helpText: row.field_help_text || "",
+      supportsAI: String(row.field_supports_ai).toLowerCase() === "true",
+      supportsLookup: String(row.field_supports_lookup).toLowerCase() === "true",
+    };
+
+    currentSection.fields.push(field);
+  }
+
+  return {
+    name: formName,
+    description: formDescription,
+    sections,
+  };
+}
 
 export { convertCsvToActualDataForForm };
