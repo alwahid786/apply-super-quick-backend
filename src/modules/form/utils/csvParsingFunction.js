@@ -77,7 +77,6 @@ function convertCsvToActualFormData(csvInput) {
     skip_empty_lines: true,
     trim: true,
   });
-  console.log("title is ", rows);
   let formName = "";
   let formDescription = "";
   const sections = [];
@@ -102,7 +101,6 @@ function convertCsvToActualFormData(csvInput) {
     }
     // 4 if section is a custom section
     if (isSectionCustom) {
-      console.log("custom section called");
       const sectionName = row?.section_name;
       const sectionTitle = row?.section_title;
       const isSectionAlreadyExist = sections.find(
