@@ -1,54 +1,5 @@
 import { parse } from "csv-parse/sync";
 
-const convertCsvToAsctualDataForForm = (csvFile) => {
-  try {
-    const csvData = csvFile.buffer.toString("utf-8");
-    const records = parse(csvData, { columns: true, skip_empty_lines: true, trim: true });
-    console.log(`Parsed ${records.length} rows from CSV file`);
-    if (records.length > 0) console.log("CSV columns:", Object.keys(records[0]));
-    // Get form name from first row
-    let formName = "Sample Form";
-    if (records?.length > 0) formName = records?.[0]?.form_name || formName;
-    console.log(`Form name: "${formName}"`);
-    // Initialize sections map
-    const sections = {};
-    // IMPORTANT: We need to preserve exact order from CSV
-    records.forEach((row, i) => {
-      const sectionTitle = row?.section_title || `section-${i}`;
-      const sectionDescription = row?.section_description;
-      const field = {
-        name: row?.field_name,
-        label: row?.field_label,
-        type: row?.field_type,
-        required: row?.field_required === "true",
-        options: row?.field_options
-          ? row?.field_options.split(";").map((option) => {
-              const [value, label] = option?.split(":");
-              return { value, label };
-            })
-          : [],
-      };
-      // Check if section already exists
-      if (!sections[sectionTitle])
-        sections[sectionTitle] = { title: sectionTitle, description: sectionDescription, fields: [] };
-      sections[sectionTitle].fields.push(field);
-    });
-    // Convert sections map to array and create final form configuration
-    const sectionList = Object.values(sections);
-    const formConfig = {
-      name: formName,
-      description: `Form configuration for ${formName}`,
-      sections: sectionList,
-      aiTasks: [],
-      dataLookupFields: {},
-    };
-    return formConfig;
-  } catch (error) {
-    console.log("error while creating form in testing", error);
-    return null;
-  }
-};
-
 function convertCsvToActualDataForForm(csvInput) {
   // Ensure it's a string for the CSV parser
   const csvString = Buffer.isBuffer(csvInput) ? csvInput.toString("utf8") : csvInput;
@@ -117,4 +68,68 @@ function convertCsvToActualDataForForm(csvInput) {
   };
 }
 
-export { convertCsvToActualDataForForm };
+function convertCsvToActualFormData(csvInput) {
+  // Ensure it's a string for the CSV parser
+  const csvString = Buffer.isBuffer(csvInput) ? csvInput.toString("utf8") : csvInput;
+  // Synchronously parse CSV into row objects
+  const rows = parse(csvString, {
+    columns: true,
+    skip_empty_lines: true,
+    trim: true,
+  });
+  console.log("title is ", rows);
+  let formName = "";
+  let formDescription = "";
+  const sections = [];
+  let currentSection = null;
+  for (const row of rows) {
+    currentSection = null;
+    // 1) Forward-fill form-level properties
+    if (row?.form_name) formName = row.form_name;
+    if (row?.form_description) formDescription = row.form_description;
+    // 2) Detect and start a new section
+    const title = row?.section_title;
+    if (!title) continue; // skip rows without a section title
+    if (currentSection && currentSection.title === title) continue;
+    // if section title is a block then only save section name and title and continue
+    const isSectionBlock = title?.split("_")?.[title?.split("_")?.length - 1]?.toLowerCase()?.trim() == "blk";
+    const isSectionCustom = title == "custom_section";
+    // 3 if section is a block
+    if (isSectionBlock) {
+      currentSection = { title: title, name: row?.section_name, isBlock: true };
+      sections.push(currentSection);
+      continue;
+    }
+    // 4 if section is a custom section
+    if (isSectionCustom) {
+      console.log("custom section called");
+      const sectionName = row?.section_name;
+      const sectionTitle = row?.section_title;
+      const isSectionAlreadyExist = sections.find(
+        (section) => section?.name === sectionName && section?.title === sectionTitle
+      );
+      const formFieldObj = {
+        label: row?.field_label ?? "",
+        type: row?.field_type ?? "",
+        isRequired: Boolean(row?.field_required) ? true : false,
+        placeholder: row?.field_placeholder ?? "",
+      };
+
+      // if sections already exist then update the fields else add new section
+      if (isSectionAlreadyExist?.name === sectionName) {
+        isSectionAlreadyExist.fields.push(formFieldObj);
+      } else {
+        currentSection = { title: sectionTitle, name: sectionName, fields: [formFieldObj], isBlock: false };
+        sections.push(currentSection);
+      }
+      continue;
+    }
+  }
+  return {
+    name: formName,
+    description: formDescription,
+    sections,
+  };
+}
+
+export { convertCsvToActualDataForForm, convertCsvToActualFormData };
