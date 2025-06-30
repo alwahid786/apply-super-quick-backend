@@ -12,7 +12,7 @@
   "description": "",
   "dependencies": {
     "@jest/globals": "^29.7.0",
-    "axios": "^1.9.0",
+    "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "cheerio": "^1.1.0",
     "cloudinary": "^2.5.0",
@@ -24,13 +24,17 @@
     "get-image-colors": "^4.0.1",
     "idmission-web-sdk": "^2.2.164",
     "jsonwebtoken": "^9.0.2",
+    "ml-kmeans": "^6.0.0",
     "mongoose": "^8.7.0",
     "morgan": "^1.10.0",
     "multer": "^2.0.0",
+    "node-vibrant": "^4.0.3",
     "nodemailer": "^7.0.3",
     "openai": "^5.5.1",
     "puppeteer": "^24.10.1",
-    "streamifier": "^0.1.1"
+    "sharp": "^0.34.2",
+    "streamifier": "^0.1.1",
+    "url": "^0.11.4"
   },
   "devDependencies": {
     "jest": "^29.7.0",

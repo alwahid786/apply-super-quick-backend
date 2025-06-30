@@ -1,6 +1,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { getEnv } from "./config.js";
+import OpenAI from "openai";
 
 export const __dirName = fileURLToPath(import.meta.url);
 export const __fileName = path.dirname(__dirName);
@@ -21,3 +22,5 @@ export const refreshTokenOptions = {
   secure: isDev ? false : true,
   maxAge: Number(getEnv("REFRESH_TOKEN_MAX_AGE")),
 };
+
+export const openai = new OpenAI({ apiKey: getEnv("OPENAI_API_KEY") });

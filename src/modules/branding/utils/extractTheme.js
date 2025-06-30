@@ -1,5 +1,120 @@
 import puppeteer from "puppeteer";
 import getColors from "get-image-colors";
+import { openai } from "../../../configs/constants.js";
+
+async function validateLogoColors(url, colors) {
+  if (typeof url !== "string" || !url.startsWith("http")) throw new Error("A valid website URL is required");
+  if (!Array.isArray(colors)) throw new Error("An array of HEX color strings is required");
+  // Function schema: model returns only filteredColors[]
+  const functions = [
+    {
+      name: "filterLogoColors",
+      description: "Remove any colors not found in the website’s logos",
+      parameters: {
+        type: "object",
+        properties: {
+          filteredColors: {
+            type: "array",
+            description: "Input colors filtered to only those present in logos",
+            items: { type: "string" },
+          },
+        },
+        required: ["filteredColors"],
+      },
+    },
+  ];
+
+  // Ask GPT-4o to fetch the URL, detect all logo assets,
+  // check which of the provided colors appear in those logos,
+  // and return only the matching subset.
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `
+You are a web‑verification assistant.
+Given:
+  • A website URL
+  • An array of candidate HEX color codes
+You must:
+  1) Fetch the live page.
+  2) Locate every logo asset (favicons, <img> logos, CSS/SVG logos).
+  3) Sample the colors from those logos.
+  4) Compare against the input array and remove any colors not present.
+Return exactly one function call to "filterLogoColors" with property "filteredColors" (no extra fields).
+`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify({ url, colors }),
+      },
+    ],
+    functions,
+    function_call: { name: "filterLogoColors" },
+  });
+
+  // Parse and return the filteredColors array
+  const fnCall = completion.choices?.[0]?.message?.function_call;
+  if (!fnCall?.arguments) {
+    throw new Error("Logo color validation failed");
+  }
+  const { filteredColors } = JSON.parse(fnCall.arguments);
+  return filteredColors;
+}
+async function filterColorsByLogosWithAI(colors, logos) {
+  if (!Array.isArray(colors) || !Array.isArray(logos))
+    throw new Error("colors must be an array and logos must be an array of {url:string}");
+  // Define the function schema for filtering
+  const functions = [
+    {
+      name: "filterLogoColors",
+      description: "Keep only the input colors that are actually present in the provided logo images",
+      parameters: {
+        type: "object",
+        properties: {
+          filteredColors: {
+            type: "array",
+            description: "Subset of input HEX colors that appear in the logos",
+            items: { type: "string" },
+          },
+        },
+        required: ["filteredColors"],
+      },
+    },
+  ];
+  // Call the model
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `
+You are a logo‑color validator.  
+Given:
+  • An array "colors" of candidate 6‑digit uppercase HEX codes  
+  • An array "logos" of objects { url: string } pointing to logo images  
+You must:
+  1) Download or fetch each logo image.  
+  2) Sample the colors in those logos.  
+  3) Compare to the input list and remove any HEX codes not found.  
+Return exactly one function call to "filterLogoColors" with a single property "filteredColors" containing the intersection.
+`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify({ colors, logos }),
+      },
+    ],
+    functions,
+    function_call: { name: "filterLogoColors" },
+  });
+  // Extract the filtered array
+  const fn = completion.choices?.[0]?.message?.function_call;
+  if (!fn?.arguments) throw new Error("Logo color filtering failed");
+  const { filteredColors } = JSON.parse(fn.arguments);
+  return filteredColors;
+}
 
 function rgbToHex(color) {
   const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
@@ -13,7 +128,6 @@ function rgbToHex(color) {
       .toUpperCase()
   );
 }
-
 export async function fetchBranding(url) {
   const browser = await puppeteer.launch({
     headless: true,
@@ -124,15 +238,19 @@ export async function fetchBranding(url) {
         pal.forEach((c) => logoColors.push(c.hex().toUpperCase()));
       } catch {}
     }
-    let logoHexes = [...new Set(logoColors)].slice(0, 5);
+    let logoHexes = [...new Set(logoColors)];
     // pad logoHexes from screenshotHexes
     for (const hex of screenshotHexes) {
-      if (logoHexes.length >= 5) break;
       if (!logoHexes.includes(hex)) logoHexes.push(hex);
     }
+    // const filteredLoosColors = await validateLogoColors(url, logoHexes);
+    const filteredLoosColors = await filterColorsByLogosWithAI(logoHexes, logos);
 
     const title = await page.title();
     await browser.close();
+
+    console.log("logo hexes", logoHexes);
+    console.log("filtered colors ", filteredLoosColors);
 
     return {
       name: title,
@@ -148,7 +266,7 @@ export async function fetchBranding(url) {
         frame: computed.frameColor ? rgbToHex(computed.frameColor) : null,
       },
       fontFamily: computed.fontFamily,
-      color_palette: { fromLogo: logoHexes, fromSite: siteColors },
+      color_palette: { fromLogo: filteredLoosColors?.slice(0, 5), fromSite: siteColors },
     };
   } catch (err) {
     await browser.close();
