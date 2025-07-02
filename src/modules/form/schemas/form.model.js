@@ -6,7 +6,7 @@ const formSchema = new mongoose.Schema(
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
     branding: { type: mongoose.Schema.Types.ObjectId, ref: "Branding", default: null },
     brandingType: { type: String, default: "default" },
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     description: { type: String },
     logo: { type: imageSchema, default: null },
     sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormSection" }],
