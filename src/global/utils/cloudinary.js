@@ -25,7 +25,7 @@ export const uploadOnCloudinary = async (image, subFolder) => {
     const streamUpload = (buffer) => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.v2.uploader.upload_stream(
-          { resource_type: "image", folder: `${getEnv("CLOUDINARY_FOLDER_NAME")}/${subFolder}` },
+          { resource_type: "auto", folder: `${getEnv("CLOUDINARY_FOLDER_NAME")}/${subFolder}` },
           (error, result) => {
             if (error) return reject(error);
             resolve(result);

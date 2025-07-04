@@ -5,6 +5,8 @@ import Form from "../schemas/form.model.js";
 import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
 import FormField from "../schemas/fields.model.js";
 import FormSection from "../schemas/sections.model.js";
+import { SubmitForm } from "../schemas/submitForm.model.js";
+import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 
 const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -93,4 +95,39 @@ const deleteSingleForm = asyncHandler(async (req, res, next) => {
   if (!form) return next(new CustomError(400, "Form Not Found"));
   return res.status(200).json({ success: true, message: "Form Deleted Successfully" });
 });
-export { createNewForm, getMyallForms, getSingleForm, deleteSingleForm };
+
+const submitForm = asyncHandler(async (req, res, next) => {
+  const userId = req?.user?._id;
+  console.log(req.body);
+  const { formId, formData } = req.body;
+  if (!formId || !formData) return next(new CustomError(400, "Please Provide Form Id and Form Data"));
+  const isFormExist = await Form.findById(formId);
+  if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
+  const form = await SubmitForm.create({ formId, submitData: formData, user: userId });
+  if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
+  return res.status(200).json({ success: true, message: "Form Submitted Successfully", data: form });
+});
+let submitId = "";
+let myCloud = "";
+const submitFormArticleFile = asyncHandler(async (req, res, next) => {
+  try {
+    const file = req.file;
+    console.log("filedata boyd", req.body);
+    const { submissionId, name } = req.body;
+    if (!submissionId || !name) throw new CustomError(400, "Please Provide Form Id and Form Data");
+    submitId = submissionId;
+    const isFormExist = await SubmitForm.findById(submissionId);
+    if (!isFormExist) throw new CustomError(400, "Form Not Found");
+    myCloud = await uploadOnCloudinary(file, "docs");
+    if (!myCloud.public_id || !myCloud.secure_url) throw new CustomError(400, "Error While Uploading File");
+    const formData = { ...isFormExist.submitData, [name]: { url: myCloud.secure_url, public_id: myCloud.public_id } };
+    const updatedSubmit = await SubmitForm.findByIdAndUpdate(submissionId, { submitData: formData }, { new: true });
+    if (!updatedSubmit) throw new CustomError(400, "Error While Uploading File");
+    return res.status(200).json({ success: true, message: "File Uploaded Successfully" });
+  } catch (error) {
+    if (myCloud?.public_id) await removeFromCloudinary(myCloud.public_id, "docs");
+    if (submitId) await SubmitForm.findByIdAndDelete(submitId);
+    return next(new CustomError(400, "Error While Uploading File"));
+  }
+});
+export { createNewForm, getMyallForms, getSingleForm, deleteSingleForm, submitForm, submitFormArticleFile };
