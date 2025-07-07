@@ -4,6 +4,7 @@ import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddlewa
 import {
   createNewForm,
   deleteSingleForm,
+  getCompanyDetailsByUrl,
   getMyallForms,
   getSingleForm,
   submitForm,
@@ -25,5 +26,6 @@ app
 
 app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
 app.post("/submit-article", isAuthenticated, isAuthorized(submit_form), singleUpload, submitFormArticleFile);
+app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
 
 export default app;

@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
+import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 import { CustomError } from "../../../global/utils/customError.js";
-import Form from "../schemas/form.model.js";
-import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
 import FormField from "../schemas/fields.model.js";
+import Form from "../schemas/form.model.js";
 import FormSection from "../schemas/sections.model.js";
 import { SubmitForm } from "../schemas/submitForm.model.js";
-import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
+import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
+import { extractCompanyInfo } from "../utils/extractCompanyDetails.js";
 
 const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -130,4 +131,19 @@ const submitFormArticleFile = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Error While Uploading File"));
   }
 });
-export { createNewForm, getMyallForms, getSingleForm, deleteSingleForm, submitForm, submitFormArticleFile };
+
+const getCompanyDetailsByUrl = asyncHandler(async (req, res, next) => {
+  const { url } = req.body;
+  if (!url) return next(new CustomError(400, "Please Provide Url"));
+  const result = await extractCompanyInfo(url);
+  return res.status(200).json({ success: true, data: result });
+});
+export {
+  createNewForm,
+  deleteSingleForm,
+  getCompanyDetailsByUrl,
+  getMyallForms,
+  getSingleForm,
+  submitForm,
+  submitFormArticleFile,
+};
