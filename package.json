@@ -23,6 +23,7 @@
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "get-image-colors": "^4.0.1",
+    "idmission-auth-client": "^1.0.19",
     "idmission-web-sdk": "^2.2.164",
     "jsonwebtoken": "^9.0.2",
     "ml-kmeans": "^6.0.0",

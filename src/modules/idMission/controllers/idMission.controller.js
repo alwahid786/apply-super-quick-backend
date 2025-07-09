@@ -1,6 +1,8 @@
+import { IDmissionSessionGenerator } from "idmission-auth-client";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import { initializeSession } from "../utils/idMission.js";
+import { getEnv } from "../../../configs/config.js";
 
 const messageStore = new Map();
 const verificationStore = new Map();
@@ -114,4 +116,14 @@ const getIdMissionResult = asyncHandler(async (req, res, next) => {
   });
 });
 
-export { createIdMissionSession, getIdMissionResult, verifyEmail, verifyPhone };
+// get id mission session
+const getIdMissionSession = asyncHandler(async (req, res, next) => {
+  const apiKeyId = getEnv("IDMISSION_API_KEY_ID");
+  const apiKeySecret = getEnv("IDMISSION_API_KEY_SECRET");
+  if (!apiKeyId || !apiKeySecret) return next(new CustomError(400, "Missing required IDMission environment variables"));
+  const session = await new IDmissionSessionGenerator({ apiKeyId, apiKeySecret }).generate();
+  if (!session) return next(new CustomError(400, "Failed to generate IDMission session"));
+  return res.status(200).json({ success: true, session });
+});
+
+export { createIdMissionSession, getIdMissionResult, verifyEmail, verifyPhone, getIdMissionSession };

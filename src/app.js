@@ -12,6 +12,7 @@ import { getEnv } from "./configs/config.js";
 import { markEmailVerified } from "./modules/idMission/utils/verification.js";
 import { addPermissionsIntoDB } from "./configs/permissions.js";
 import morgan from "morgan";
+import { IDmissionSessionGenerator } from "idmission-auth-client";
 
 const app = express();
 

@@ -33,9 +33,9 @@ const IDMISSION_LOGIN_ID = getEnv("IDMISSION_LOGIN_ID") || "";
 const IDMISSION_USER_ID = getEnv("IDMISSION_USER_ID") || "";
 const IDMISSION_PASSWORD = getEnv("IDMISSION_PASSWORD") || "";
 const IDMISSION_CLIENT_SECRET = getEnv("IDMISSION_CLIENT_SECRET") || "";
-const IDMISSION_API_KEY = getEnv("IDMISSION_API_KEY") || "";
+const IDMISSION_API_KEY = getEnv("IDMISSION_API_KEY_ID") || "";
 const IDMISSION_KEY_ID = getEnv("IDMISSION_KEY_ID") || "";
-const IDMISSION_API_SECRET = getEnv("IDMISSION_API_SECRET") || "";
+const IDMISSION_API_SECRET = getEnv("IDMISSION_API_KEY_SECRET") || "";
 
 // Log API configuration for debugging (without exposing sensitive information)
 console.log(`IDMission API Configuration: 
