@@ -1,4 +1,11 @@
 import { parse } from "csv-parse/sync";
+import {
+  company_info_fields,
+  beneficial_fields,
+  bank_account_info_fields,
+  average_transaction_fields,
+  articleOfIncorporation_fields,
+} from "./staticFields.js";
 
 function convertCsvToActualFormData(csvInput) {
   // Ensure it's a string for the CSV parser
@@ -35,6 +42,20 @@ function convertCsvToActualFormData(csvInput) {
       if (ai_support) currentSection.ai_support = ai_support;
       const display_text = row?.display_text?.split(":")?.[0] == "section" ? row?.display_text?.split(":")?.[1] : null;
       if (display_text) currentSection.display_text = display_text;
+
+      // now define some fields for static blocks
+      // ---------------------------------------
+      if (title == "company_information_blk") {
+        currentSection.fields = company_info_fields;
+      } else if (title == "beneficial_blk") {
+        currentSection.fields = beneficial_fields;
+      } else if (title == "bank_account_info_blk") {
+        currentSection.fields = bank_account_info_fields;
+      } else if (title == "avg_transactions_blk") {
+        currentSection.fields = average_transaction_fields;
+      } else if (title == "incorporation_article_blk") {
+        currentSection.fields = articleOfIncorporation_fields;
+      }
       sections.push(currentSection);
       continue;
     }

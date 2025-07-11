@@ -11,6 +11,12 @@ export const formFieldSchema = new mongoose.Schema(
     type: { type: String, required: true },
     placeholder: { type: String },
     required: { type: Boolean, default: false },
+    name: { type: String },
+    aiHelp: { type: Boolean, default: false },
+    options: { type: [{ label: String, value: String }] },
+    aiPrompt: { type: String },
+    aiResponse: { type: String },
+    // additional fields for AI support
     displayText: { type: String },
     ai_support: { type: String },
     ai_formatting: { type: String },

@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 import { CustomError } from "../../../global/utils/customError.js";
@@ -6,6 +5,7 @@ import FormField from "../schemas/fields.model.js";
 import Form from "../schemas/form.model.js";
 import FormSection from "../schemas/sections.model.js";
 import { SubmitForm } from "../schemas/submitForm.model.js";
+import { createFormSectionsFields } from "../utils/createFormSectionsFields.js";
 import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
 import { extractCompanyInfo } from "../utils/extractCompanyDetails.js";
 
@@ -13,49 +13,16 @@ const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
   if (!user?._id) return next(new CustomError(400, "User Not Found"));
   const csvFile = req?.file;
-  console.log("csvFile", csvFile);
   if (!csvFile?.buffer) return next(new CustomError(400, "Please Provide CSV File"));
   const formData = convertCsvToActualFormData(csvFile?.buffer);
   if (!formData) return next(new CustomError(400, "Error While Parsing CSV File"));
   const isExist = await Form.findOne({ owner: user?._id, name: formData?.name });
   if (isExist) return next(new CustomError(400, "Form Already Exist with same name"));
   // now create a array of sections and fields with _id and save it
-  const fields = [];
-  const sections = [];
-  const sectionIds = [];
-  formData?.sections?.forEach((section) => {
-    const sectionId = new mongoose.Types.ObjectId();
-    sectionIds.push(String(sectionId));
-    const singleSection = { _id: sectionId, owner: user?._id };
-    if (section?.title) singleSection.title = section?.title;
-    if (section?.name) singleSection.name = section?.name;
-    if (section?.isBlock) singleSection.isBlock = section?.isBlock;
-    if (section?.displayText) singleSection.displayText = section?.displayText;
-    if (section?.ai_formatting) singleSection.ai_formatting = section?.ai_formatting;
-    if (section?.ai_support) singleSection.ai_support = section?.ai_support;
-    const fieldsIds = [];
-    if (Array.isArray(section?.fields) && section?.fields?.length) {
-      {
-        section?.fields?.forEach((field) => {
-          const fieldId = new mongoose.Types.ObjectId();
-          fieldsIds.push(String(fieldId));
-          const singleField = { _id: fieldId, owner: user?._id };
-          if (field?.label) singleField.label = field?.label;
-          if (field?.type) singleField.type = field?.type;
-          if (field?.name) singleField.name = field?.name;
-          if (field?.placeholder) singleField.placeholder = field?.placeholder;
-          if (field?.required) singleField.required = field?.required;
-          if (field?.displayText) singleField.displayText = field?.displayText;
-          if (field?.ai_support) singleField.ai_support = field?.ai_support;
-          if (field?.ai_formatting) singleField.ai_formatting = field?.ai_formatting;
-          fields.push(singleField);
-        });
-      }
-    }
-    singleSection.fields = fieldsIds;
-    sections.push(singleSection);
-  });
-
+  const { sections, fields, sectionIds } = createFormSectionsFields(formData, user);
+  if (!sections?.length || !fields?.length || !sectionIds?.length) {
+    return next(new CustomError(400, "Error While Creating Sections or Fields"));
+  }
   // create form
   const form = await Form.create({
     owner: user?._id,
