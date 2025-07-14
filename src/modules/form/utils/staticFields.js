@@ -150,18 +150,6 @@ const beneficial_fields = [
     placeholder: "e.g. 123-45-6789",
     aiHelp: false,
   },
-
-  {
-    label: "Do you own 25% or more of the company?",
-    type: "radio",
-    options: [
-      { label: "Yes", value: "yes" },
-      { label: "No", value: "no" },
-    ],
-    name: "main_owner_own_25_percent_or_more",
-    required: true,
-    aiHelp: false,
-  },
   {
     label: "What is your percentage of ownership?",
     type: "range",
@@ -184,38 +172,9 @@ const beneficial_fields = [
     aiHelp: false,
   },
   {
-    label: "Additional Owner Name",
-    type: "text",
-    name: "additional_owner_name",
-    required: false,
-    placeholder: "e.g. Jane Smith",
-    aiHelp: false,
-  },
-  {
-    label: "Additional Owner Email Address",
-    type: "email",
-    name: "additional_owner_email",
-    required: false,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "Additional Owner SSN",
-    type: "text",
-    name: "additional_owner_ssn",
-    required: false,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-  },
-  {
-    label: "Additional Owner Percentage",
-    type: "range",
-    name: "additional_owner_percentage",
-    min: 0,
-    max: 100,
-    defaultValue: 25,
-    required: false,
-    aiHelp: false,
+    label: "Additional Owner",
+    name: "additional_owner",
+    type: "block",
   },
 ];
 const bank_account_info_fields = [
