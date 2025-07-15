@@ -2,13 +2,17 @@ import express from "express";
 import { webPermissions } from "../../../configs/permissions.js";
 import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddleware.js";
 import {
+  addNewFormField,
   createNewForm,
   deleteSingleForm,
+  deleteSingleFormField,
   getCompanyDetailsByUrl,
   getMyallForms,
   getSingleForm,
+  getSingleFormFields,
   submitForm,
   submitFormArticleFile,
+  updateSingleFormField,
 } from "../controllers/form.controller.js";
 import { singleUpload } from "../../../middlewares/multer.js";
 
@@ -27,5 +31,13 @@ app
 app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
 app.post("/submit-article", isAuthenticated, isAuthorized(submit_form), singleUpload, submitFormArticleFile);
 app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
+
+// fields related routes
+app.post("/create-field", isAuthenticated, addNewFormField);
+app
+  .route("/fields/:fieldId")
+  .delete(isAuthenticated, isAuthorized(delete_form), deleteSingleFormField)
+  .put(isAuthenticated, isAuthorized(create_form), updateSingleFormField)
+  .get(isAuthenticated, isAuthorized(read_form), getSingleFormFields);
 
 export default app;

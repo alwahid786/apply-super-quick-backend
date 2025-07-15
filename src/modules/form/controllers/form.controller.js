@@ -1,3 +1,4 @@
+import { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 import { CustomError } from "../../../global/utils/customError.js";
@@ -105,6 +106,57 @@ const getCompanyDetailsByUrl = asyncHandler(async (req, res, next) => {
   const result = await extractCompanyInfo(url);
   return res.status(200).json({ success: true, data: result });
 });
+// fields controllers
+// =================
+
+const getSingleFormFields = asyncHandler(async (req, res, next) => {
+  const user = req?.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const fieldId = req?.params?.fieldId;
+  if (!isValidObjectId(fieldId)) return next(new CustomError(400, "Invalid Field Id"));
+  const field = await FormField.findOne({ _id: fieldId, owner: user?._id });
+  if (!field) return next(new CustomError(400, "Field Not Found"));
+  return res.status(200).json({ success: true, data: field });
+});
+
+const updateSingleFormField = asyncHandler(async (req, res, next) => {
+  const user = req?.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const fieldId = req?.params?.fieldId;
+  if (!isValidObjectId(fieldId)) return next(new CustomError(400, "Invalid Field Id"));
+  const fieldData = req.body;
+  const updatedField = await FormField.findOneAndUpdate({ _id: fieldId, owner: user?._id }, fieldData, { new: true });
+  if (!updatedField) return next(new CustomError(400, "Error While Updating Field"));
+  return res.status(200).json({ success: true, data: updatedField });
+});
+
+const addNewFormField = asyncHandler(async (req, res, next) => {
+  const user = req?.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const { sectionId, fieldData } = req.body;
+  if (!sectionId) return next(new CustomError(400, "Please Provide Section Id"));
+  const section = await FormSection.findOne({ _id: sectionId, owner: user?._id });
+  if (!section) return next(new CustomError(400, "Section Not Found"));
+  const newField = await FormField.create({ ...fieldData, owner: user?._id });
+  if (!newField) return next(new CustomError(400, "Error While Creating Field"));
+  section.fields.push(newField?._id);
+  const updatedSection = await FormSection.findByIdAndUpdate(section._id, { fields: section.fields }, { new: true });
+  if (!updatedSection) return next(new CustomError(400, "Error While Updating Section"));
+  return res.status(200).json({ success: true, message: "Field Created Successfully", data: newField });
+});
+
+const deleteSingleFormField = asyncHandler(async (req, res, next) => {
+  const user = req?.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const fieldId = req?.params?.fieldId;
+  if (!isValidObjectId(fieldId)) return next(new CustomError(400, "Invalid Field Id"));
+  const field = await FormField.findOneAndDelete({ _id: fieldId, owner: user?._id });
+  if (!field) return next(new CustomError(400, "Field Not Found"));
+  // remove field from section
+  await FormSection.updateMany({ fields: fieldId }, { $pull: { fields: fieldId } });
+  return res.status(200).json({ success: true, message: "Field Deleted Successfully" });
+});
+
 export {
   createNewForm,
   deleteSingleForm,
@@ -113,4 +165,9 @@ export {
   getSingleForm,
   submitForm,
   submitFormArticleFile,
+  // fields related controllers
+  getSingleFormFields,
+  updateSingleFormField,
+  addNewFormField,
+  deleteSingleFormField,
 };

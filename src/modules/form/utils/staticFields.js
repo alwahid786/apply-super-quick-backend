@@ -23,7 +23,30 @@ const company_info_fields = [
     placeholder: "e.g. Example Corp.",
     aiHelp: true,
     aiPrompt: "What is the DBA name of the company?",
-    aiResponse: "The DBA name is the name under which the business operates.",
+    aiResponse: `# ✅ Understanding DBA (Doing Business As)
+
+---
+
+## 📌 What is a DBA?
+
+> A **DBA (Doing Business As)** is a registered **trade name** that a company uses to operate under a different name than its official legal name.  
+> It allows businesses to present a unique brand or identity while remaining the same legal entity.
+
+---
+
+## 📝 Definition
+
+- A **DBA** allows a business to use a name other than its registered legal name.
+- It is commonly used for branding, marketing, or business expansion.
+- A **DBA does NOT create a separate legal entity**.
+
+---
+
+## 📋 Example
+
+- **Legal Name:** XYZ Technologies Pvt. Ltd.
+- **DBA Name:** XYZ Web Solutions
+`,
   },
   {
     label: "Business Description",
