@@ -150,39 +150,17 @@ const company_info_fields = [
 ];
 const beneficial_fields = [
   {
-    label: "Name (me)",
-    type: "text",
-    name: "main_owner_name",
+    label: "Are you the main owner?",
+    type: "radio",
+    options: [
+      { label: "Yes", value: "yes" },
+      { label: "No", value: "no" },
+    ],
+    name: "applicant_is_main_owner",
     required: true,
-    placeholder: "e.g. John Doe",
     aiHelp: false,
   },
-  {
-    label: "Email Address (me)",
-    type: "email",
-    name: "main_owner_email",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "SSN (me)",
-    type: "text",
-    name: "main_owner_ssn",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-  },
-  {
-    label: "What is your percentage of ownership?",
-    type: "range",
-    name: "your_percentage_value",
-    min: 0,
-    max: 100,
-    defaultValue: 25,
-    required: false,
-    aiHelp: false,
-  },
+
   {
     label: "Are there additional owners who own 25% or more of the company?",
     type: "radio",

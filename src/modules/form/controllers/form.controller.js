@@ -9,6 +9,7 @@ import { SubmitForm } from "../schemas/submitForm.model.js";
 import { createFormSectionsFields } from "../utils/createFormSectionsFields.js";
 import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
 import { extractCompanyInfo } from "../utils/extractCompanyDetails.js";
+import mongoose from "mongoose";
 
 const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -24,6 +25,7 @@ const createNewForm = asyncHandler(async (req, res, next) => {
   if (!sections?.length || !fields?.length || !sectionIds?.length) {
     return next(new CustomError(400, "Error While Creating Sections or Fields"));
   }
+
   // create form
   const form = await Form.create({
     owner: user?._id,
@@ -52,7 +54,7 @@ const getMyallForms = asyncHandler(async (req, res, next) => {
 const getSingleForm = asyncHandler(async (req, res, next) => {
   const formId = req?.params?.formId;
   if (!isValidObjectId(formId)) return next(new CustomError(400, "Invalid Form Id"));
-  const form = await Form.findById(formId).populate({ path: "sections", populate: { path: "fields" } });
+  const form = await Form.findOne({ _id: formId }).populate({ path: "sections", populate: { path: "fields" } });
   if (!form) return next(new CustomError(400, "Form Not Found"));
   return res.status(200).json({ success: true, data: form });
 });
@@ -108,6 +110,69 @@ const getCompanyDetailsByUrl = asyncHandler(async (req, res, next) => {
 });
 // fields controllers
 // =================
+const updateAddDeleteMultipleFields = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  if (!userId) return next(new CustomError(400, "User Not Found"));
+  const { sectionId, fieldsData } = req.body;
+  if (!sectionId) return next(new CustomError(400, "Please Provide Section Id"));
+  if (Array.isArray(fieldsData) && !fieldsData.length) return next(new CustomError(400, "Please Provide Fields Data"));
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // 1) Fetch section
+      const section = await FormSection.findOne({ _id: sectionId, owner: userId }).session(session);
+      if (!section) throw new CustomError(400, "Section Not Found");
+
+      // 2) Build update & insert ops
+      const bulkOps = [];
+      const newIds = [];
+      for (const field of fieldsData) {
+        if (field._id) {
+          const { _id, ...data } = field;
+          bulkOps.push({
+            updateOne: {
+              filter: { _id },
+              update: { $set: data },
+            },
+          });
+        } else {
+          const _id = new mongoose.Types.ObjectId();
+          newIds.push(_id);
+          bulkOps.push({
+            insertOne: {
+              document: { _id, owner: userId, ...field },
+            },
+          });
+        }
+      }
+
+      // 3) Handle deletes
+      const incomingIds = fieldsData?.filter((f) => f._id).map((f) => String(f._id));
+      const toDelete = section.fields.map((id) => String(id)).filter((id) => !incomingIds.includes(id));
+      if (toDelete.length) {
+        bulkOps.push({
+          deleteMany: { filter: { _id: { $in: toDelete } } },
+        });
+      }
+
+      // 4) Execute all in one bulkWrite
+      if (bulkOps.length) {
+        await FormField.bulkWrite(bulkOps, { session });
+      }
+
+      // 5) Update section.fields array
+      section.fields = [...incomingIds.map((id) => String(id)), ...newIds.map((id) => String(id))];
+      await section.save({ session });
+    });
+
+    res.status(200).json({ success: true, message: "Fields updated successfully" });
+  } catch (err) {
+    next(err instanceof CustomError ? err : new CustomError(500, err.message));
+  } finally {
+    session.endSession();
+  }
+});
 
 const getSingleFormFields = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -166,6 +231,7 @@ export {
   submitForm,
   submitFormArticleFile,
   // fields related controllers
+  updateAddDeleteMultipleFields,
   getSingleFormFields,
   updateSingleFormField,
   addNewFormField,

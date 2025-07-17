@@ -24,5 +24,15 @@ export const formFieldSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// remove from all docs where it exists
+formFieldSchema.post("findOneAndDelete", async function (doc) {
+  if (doc?._id) {
+    await FormSection.updateMany(
+      { fields: doc._id }, // If the field exists in the array
+      { $pull: { fields: doc._id } } // Remove it
+    );
+  }
+});
+
 export const FormField = mongoose.model("FormField", formFieldSchema);
 export default FormField;

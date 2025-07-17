@@ -12,6 +12,7 @@ import {
   getSingleFormFields,
   submitForm,
   submitFormArticleFile,
+  updateAddDeleteMultipleFields,
   updateSingleFormField,
 } from "../controllers/form.controller.js";
 import { singleUpload } from "../../../middlewares/multer.js";
@@ -33,6 +34,7 @@ app.post("/submit-article", isAuthenticated, isAuthorized(submit_form), singleUp
 app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
 
 // fields related routes
+app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(create_form), updateAddDeleteMultipleFields);
 app.post("/create-field", isAuthenticated, addNewFormField);
 app
   .route("/fields/:fieldId")
