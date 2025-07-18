@@ -16,7 +16,7 @@ import { IDmissionSessionGenerator } from "idmission-auth-client";
 
 const app = express();
 
-// addPermissionsIntoDB();
+addPermissionsIntoDB();
 
 // middlewares
 app.use(
