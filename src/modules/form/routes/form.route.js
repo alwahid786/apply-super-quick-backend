@@ -6,6 +6,7 @@ import {
   createNewForm,
   deleteSingleForm,
   deleteSingleFormField,
+  formateTextInMarkDown,
   getCompanyDetailsByUrl,
   getMyallForms,
   getSingleForm,
@@ -41,5 +42,8 @@ app
   .delete(isAuthenticated, isAuthorized(delete_form), deleteSingleFormField)
   .put(isAuthenticated, isAuthorized(create_form), updateSingleFormField)
   .get(isAuthenticated, isAuthorized(read_form), getSingleFormFields);
+
+// other form related ai things
+app.post("/formate-display-text", isAuthenticated, isAuthorized(create_form), formateTextInMarkDown);
 
 export default app;

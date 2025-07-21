@@ -14,11 +14,11 @@ export const formFieldSchema = new mongoose.Schema(
     name: { type: String },
     aiHelp: { type: Boolean, default: false },
     options: { type: [{ label: String, value: String }] },
+    // additional fields for AI support
     aiPrompt: { type: String },
     aiResponse: { type: String },
-    // additional fields for AI support
+    isDisplayText: { type: Boolean, default: false },
     displayText: { type: String },
-    ai_support: { type: String },
     ai_formatting: { type: String },
   },
   { timestamps: true }
