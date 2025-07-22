@@ -228,29 +228,20 @@ const formateTextInMarkDown = asyncHandler(async (req, res, next) => {
   const { text, instructions } = req.body;
   if (!text) return next(new CustomError(400, "Please Provide Text"));
   if (!instructions) return next(new CustomError(400, "Please Provide Instructions"));
-  const messages = [
-    {
-      role: "system",
-      content:
-        "You are a strict markdown formatter assistant. You MUST follow the user’s instructions EXACTLY. You MUST NOT output any extra explanation, comments, or stray characters. You MUST output valid markdown and nothing else.",
-    },
-    {
-      role: "user",
-      content: `TEXT_TO_FORMAT:
-${text}
-
-INSTRUCTIONS:
-${instructions}
-
-Respond exactly with only markdown not any other comment text or any other thing only send correct markdown as a result in markdown formate`,
-    },
-  ];
+  const systemPrompt = `You are a text formatting assistant. Format the provided text according to the user's instructions and return only the formatted HTML result.
+IMPORTANT:
+- Return ONLY the formatted HTML, no explanations or code
+- Use proper HTML structure with tables, lists, or divs as appropriate
+- Make links clickable with proper <a href> tags
+- Use clean, professional styling with borders and proper spacing
+- If you can't format as requested, return the original text
+User instructions: ${instructions}
+Text to format: ${text}`;
 
   const result = await openai.chat.completions.create({
     model: "gpt-4o",
-    messages,
-    temperature: 0,
-    stop: ["}"],
+    messages: [{ role: "system", content: systemPrompt }],
+    temperature: 0.1,
   });
 
   return res.status(200).json({ success: true, data: result.choices[0].message.content });
