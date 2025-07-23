@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import FormSection from "./sections.model.js";
+import FormBlock from "./blocks.model.js";
 
 export const formFieldSchema = new mongoose.Schema(
   {
@@ -14,6 +16,9 @@ export const formFieldSchema = new mongoose.Schema(
     name: { type: String },
     aiHelp: { type: Boolean, default: false },
     options: { type: [{ label: String, value: String }] },
+    minValue: { type: Number },
+    maxValue: { type: Number },
+    defaultValue: { type: String },
     // additional fields for AI support
     aiPrompt: { type: String },
     aiResponse: { type: String },
@@ -27,10 +32,10 @@ export const formFieldSchema = new mongoose.Schema(
 // remove from all docs where it exists
 formFieldSchema.post("findOneAndDelete", async function (doc) {
   if (doc?._id) {
-    await FormSection.updateMany(
-      { fields: doc._id }, // If the field exists in the array
-      { $pull: { fields: doc._id } } // Remove it
-    );
+    await Promise.all([
+      FormSection.updateMany({ fields: doc._id }, { $pull: { fields: doc._id } }),
+      FormBlock.updateMany({ fields: doc._id }, { $pull: { fields: doc._id } }),
+    ]);
   }
 });
 

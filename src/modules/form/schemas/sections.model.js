@@ -14,6 +14,7 @@ const formSectionSchema = new mongoose.Schema(
     ai_formatting: { type: String },
     isBlock: { type: Boolean, default: false },
     fields: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormField" }],
+    blocks: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormBlock" }],
   },
   { timestamps: true }
 );

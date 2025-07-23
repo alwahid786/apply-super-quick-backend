@@ -11,6 +11,7 @@ import { convertCsvToActualFormData } from "../utils/csvParsingFunction.js";
 import { extractCompanyInfo } from "../utils/extractCompanyDetails.js";
 import mongoose from "mongoose";
 import { openai } from "../../../configs/constants.js";
+import FormBlock from "../schemas/blocks.model.js";
 
 const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -22,7 +23,7 @@ const createNewForm = asyncHandler(async (req, res, next) => {
   const isExist = await Form.findOne({ owner: user?._id, name: formData?.name });
   if (isExist) return next(new CustomError(400, "Form Already Exist with same name"));
   // now create a array of sections and fields with _id and save it
-  const { sections, fields, sectionIds } = createFormSectionsFields(formData, user);
+  const { sections, fields, sectionIds, blocks } = createFormSectionsFields(formData, user);
   if (!sections?.length || !fields?.length || !sectionIds?.length) {
     return next(new CustomError(400, "Error While Creating Sections or Fields"));
   }
@@ -38,6 +39,9 @@ const createNewForm = asyncHandler(async (req, res, next) => {
   // create sections
   const createdSections = await FormSection.insertMany(sections);
   if (!createdSections?.length) return next(new CustomError(400, "Error While Creating Sections"));
+  // create blocks
+  const createdBlocks = await FormBlock.insertMany(blocks);
+  if (!createdBlocks?.length) return next(new CustomError(400, "Error While Creating Blocks"));
   // create fields
   const createdFields = await FormField.insertMany(fields);
   if (!createdFields?.length) return next(new CustomError(400, "Error While Creating Fields"));
@@ -47,7 +51,8 @@ const createNewForm = asyncHandler(async (req, res, next) => {
 const getMyallForms = asyncHandler(async (req, res, next) => {
   const user = req?.user;
   if (!user?._id) return next(new CustomError(400, "User Not Found"));
-  const forms = await Form.find({ owner: user?._id }).populate({ path: "sections", populate: { path: "fields" } });
+
+  const forms = await Form.find({ owner: user?._id });
   if (!forms?.length) return next(new CustomError(400, "No Forms Found"));
   return res.status(200).json({ success: true, data: forms });
 });
@@ -55,7 +60,10 @@ const getMyallForms = asyncHandler(async (req, res, next) => {
 const getSingleForm = asyncHandler(async (req, res, next) => {
   const formId = req?.params?.formId;
   if (!isValidObjectId(formId)) return next(new CustomError(400, "Invalid Form Id"));
-  const form = await Form.findOne({ _id: formId }).populate({ path: "sections", populate: { path: "fields" } });
+  const form = await Form.findOne({ _id: formId }).populate({
+    path: "sections",
+    populate: [{ path: "fields" }, { path: "blocks", populate: { path: "fields" } }],
+  });
   if (!form) return next(new CustomError(400, "Form Not Found"));
   return res.status(200).json({ success: true, data: form });
 });

@@ -6,6 +6,115 @@ import {
   average_transaction_fields,
   articleOfIncorporation_fields,
 } from "./staticFields.js";
+import mongoose from "mongoose";
+
+const applicantIsMainOwnerFields = [
+  {
+    label: "Name (main owner)",
+    type: "text",
+    name: "main_owner_name",
+    required: true,
+    placeholder: "e.g. John Doe",
+    aiHelp: false,
+  },
+  {
+    label: "Email Address (main owner)",
+    type: "email",
+    name: "main_owner_email",
+    required: true,
+    placeholder: "e.g. 8aQ0A@example.com",
+    aiHelp: false,
+  },
+  {
+    label: "SSN (main owner)",
+    type: "text",
+    name: "main_owner_ssn",
+    required: true,
+    placeholder: "e.g. 123-45-6789",
+    aiHelp: false,
+  },
+  {
+    label: "Ownership Percentage (main owner)?",
+    type: "range",
+    name: "main owner_percentage_value",
+    minValue: 0,
+    maxValue: 100,
+    defaultValue: 0,
+    required: false,
+    aiHelp: false,
+  },
+];
+const applicantIsNotMainOwnerFields = [
+  {
+    label: "Name (your)",
+    type: "text",
+    name: "your_name",
+    required: true,
+    placeholder: "e.g. John Doe",
+    aiHelp: false,
+  },
+  {
+    label: "Email Address (your)",
+    type: "email",
+    name: "your_email",
+    required: true,
+    placeholder: "e.g. 8aQ0A@example.com",
+    aiHelp: false,
+  },
+  {
+    label: "SSN (your)",
+    type: "text",
+    name: "your_ssn",
+    required: true,
+    placeholder: "e.g. 123-45-6789",
+    aiHelp: false,
+  },
+  {
+    label: "Ownership Percentage (your)?",
+    type: "range",
+    name: "main your_percentage_value",
+    minValue: 0,
+    maxValue: 100,
+    defaultValue: 0,
+    required: false,
+    aiHelp: false,
+  },
+
+  {
+    label: "Name (main owner)",
+    type: "text",
+    name: "main_owner_name1",
+    required: true,
+    placeholder: "e.g. John Doe",
+    aiHelp: false,
+  },
+  {
+    label: "Email Address (main owner)",
+    type: "email",
+    name: "main_owner_email1",
+    required: true,
+    placeholder: "e.g. 8aQ0A@example.com",
+    aiHelp: false,
+  },
+  {
+    label: "SSN (main owner)",
+    type: "text",
+    name: "main_owner_ssn1",
+    required: true,
+    placeholder: "e.g. 123-45-6789",
+    aiHelp: false,
+  },
+  {
+    label: "Ownership Percentage (main owner)?",
+    type: "range",
+    name: "main owner_percentage_value1",
+    minValue: 0,
+    maxValue: 100,
+    defaultValue: 0,
+    required: false,
+    aiHelp: false,
+  },
+];
 
 function convertCsvToActualFormData(csvInput) {
   // Ensure it's a string for the CSV parser
@@ -48,7 +157,33 @@ function convertCsvToActualFormData(csvInput) {
       if (title == "company_information_blk") {
         currentSection.fields = company_info_fields;
       } else if (title == "beneficial_blk") {
-        currentSection.fields = beneficial_fields;
+        const fields = [];
+        const blocks = [];
+        const applicantIsMainOwnerFieldsBlock = {
+          name: "applicant_is_main_owner",
+          fields: [],
+        };
+        const applicantIsNotMainOwnerBlock = {
+          name: "applicant_is_not_main_owner",
+          fields: [],
+        };
+
+        applicantIsMainOwnerFields.forEach((singleField) => {
+          const fieldId = new mongoose.Types.ObjectId();
+          applicantIsMainOwnerFieldsBlock.fields.push(fieldId);
+          fields.push({ _id: fieldId, ...singleField });
+        });
+        applicantIsNotMainOwnerFields.forEach((singleField) => {
+          const fieldId = new mongoose.Types.ObjectId();
+          applicantIsNotMainOwnerBlock.fields.push(fieldId);
+          fields.push({ _id: fieldId, ...singleField });
+        });
+
+        blocks.push(applicantIsMainOwnerFieldsBlock);
+        blocks.push(applicantIsNotMainOwnerBlock);
+
+        currentSection.fields = [...beneficial_fields, ...fields];
+        currentSection.blocks = blocks;
       } else if (title == "bank_account_info_blk") {
         currentSection.fields = bank_account_info_fields;
       } else if (title == "avg_transactions_blk") {
