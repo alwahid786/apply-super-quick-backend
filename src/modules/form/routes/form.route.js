@@ -36,6 +36,7 @@ app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
 
 // fields related routes
 app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(create_form), updateAddDeleteMultipleFields);
+
 app.post("/create-field", isAuthenticated, addNewFormField);
 app
   .route("/fields/:fieldId")
