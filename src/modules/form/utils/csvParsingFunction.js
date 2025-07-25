@@ -206,8 +206,9 @@ function convertCsvToActualFormData(csvInput) {
       const ai_formatting = row?.ai_formatting?.split(":")?.[0] == "field" ? row?.ai_formatting?.split(":")?.[1] : null;
       const formFieldObj = {};
       if (row?.field_label) formFieldObj.label = row?.field_label;
+      if (row?.field_name) formFieldObj.name = row?.field_name;
       if (row?.field_type) formFieldObj.type = row?.field_type;
-      if (row?.field_required) formFieldObj.isRequired = row?.field_required;
+      if (row?.field_required) formFieldObj.required = row?.field_required == "TRUE" ? true : false;
       if (row?.field_placeholder) formFieldObj.placeholder = row?.field_placeholder;
       if (ai_formatting) formFieldObj.ai_formatting = ai_formatting;
       if (ai_support) formFieldObj.ai_support = ai_support;
