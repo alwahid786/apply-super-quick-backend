@@ -1,18 +1,11 @@
-import { webPermissions } from "../../../configs/permissions.js";
 import express from "express";
-import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddleware.js";
-import {
-  createIdMissionSession,
-  getIdMissionSession,
-  verifyEmail,
-  verifyPhone,
-} from "../controllers/idMission.controller.js";
+import { isAuthenticated } from "../../../middlewares/authMiddleware.js";
+import { createIDmissionSession, getProceedData, idMissionWebhook } from "../controllers/idMission.controller.js";
 
 const app = express.Router();
 
-app.get("/get-session", isAuthenticated, getIdMissionSession);
-app.post("/create", isAuthenticated, createIdMissionSession);
-app.get("/email-verify", isAuthenticated, verifyEmail);
-app.get("/phone-verify", isAuthenticated, verifyPhone);
+app.get("/get-session", isAuthenticated, createIDmissionSession);
+app.post("/webhook", idMissionWebhook);
+app.get("/get-data", getProceedData);
 
 export default app;

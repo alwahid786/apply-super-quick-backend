@@ -1,129 +1,107 @@
-import { IDmissionSessionGenerator } from "idmission-auth-client";
+import axios from "axios";
+import { getEnv } from "../../../configs/config.js";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
-import { initializeSession } from "../utils/idMission.js";
-import { getEnv } from "../../../configs/config.js";
+import qs from "qs";
 
-const messageStore = new Map();
-const verificationStore = new Map();
+// create id mission verification link and qr code
+// ===============================================
+const createIDmissionSession = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const accessToken = await getAccessToken();
 
-// create id mission session
-// ------------------------
-const createIdMissionSession = asyncHandler(async (req, res, next) => {
-  if (!req?.body) return next(new CustomError(400, "Please provide all required fields"));
-
-  const { email, name, phone } = req.body;
-  if (!email || !name || !phone) {
-    return next(new CustomError(400, "Email, name, and phone are required"));
-  }
-  try {
-    const sessionResult = await initializeSession(true, { email, name, phone }, req);
-    if (!sessionResult.success)
-      return next(new CustomError(400, sessionResult.error || "Failed to initialize ID verification session"));
-    const portalSession = sessionResult?.portalSession || {};
-    return res.status(200).json({
-      success: true,
-      message: "ID verification session created successfully",
-      sessionId: sessionResult?.sessionId,
-      idMissionSessionId: portalSession?.id,
-      webUrl: portalSession?.web_url || portalSession?.verification_urls?.web || portalSession?.url,
-      mobileUrl:
-        portalSession?.mobile_url || portalSession?.verification_urls?.mobile || portalSession?.mobile_verification_url,
-      emailVerificationUrl: sessionResult?.verificationUrls?.emailVerificationUrl,
-      phoneVerificationUrl: sessionResult?.verificationUrls?.phoneVerificationUrl,
-      customerId: sessionResult?.customerId,
-      contactVerificationEnabled: sessionResult?.contactVerificationEnabled,
-      apiCredentials: {
-        loginId: sessionResult?.loginId,
-        apiKey: sessionResult?.apiKey,
-        keyId: sessionResult?.apiKeyId,
+  const response = await axios.post(
+    "https://api.idmission.com/v4/customer/generate-identity-link",
+    {
+      customerData: {
+        requestType: "IDV-FACE",
+        personalData: {
+          uniqueNumber: user?.id,
+        },
+        additionalData: {
+          clientRequestID: user?._id,
+          notifyLink: true,
+        },
       },
-    });
-  } catch (error) {
-    console.error("Error in createIdMissionSession:", error);
-    return next(new CustomError(500, "Internal server error during session creation"));
-  }
-});
-// verify email
-// ------------
-const verifyEmail = asyncHandler(async (req, res, next) => {
-  const { token, email, sessionId } = req.query;
-  const key = `${sessionId}_${token}`;
-  if (!verificationStore.has(key)) {
-    verificationStore.set(key, {
-      sessionId,
-      email,
-      phone: null,
-      emailVerified: false,
-      phoneVerified: false,
-      token,
-      createdAt: new Date(),
-    });
-  }
-  const verification = verificationStore.get(key);
-  verification.emailVerified = true;
-  verification.emailVerifiedAt = new Date();
-  console.log(`Redirecting to /verification-success?type=email&sessionId=${sessionId}`);
-  // res.redirect(`/verification-success?type=email&sessionId=${sessionId}`);
-  return res.status(200).json({ success: true, message: "Email verified successfully" });
-});
-// verify phone
-// ------------
-const verifyPhone = asyncHandler(async (req, res, next) => {
-  const { token, email, sessionId } = req.query;
-  const key = `${sessionId}_${token}`;
+      metadata: { source: "web" },
+    },
+    {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    }
+  );
 
-  if (!verificationStore.has(key)) {
-    verificationStore.set(key, {
-      sessionId,
-      email: null,
-      phone,
-      emailVerified: false,
-      phoneVerified: false,
-      token,
-      createdAt: new Date(),
-    });
-  }
-
-  const verification = verificationStore.get(key);
-  verification.phoneVerified = true;
-  verification.phoneVerifiedAt = new Date();
-
-  console.log(`Phone verified for session: ${sessionId}`);
-
-  return res.status(200).json({ success: true, message: "Phone verified successfully" });
-});
-// get result from id mission
-// -------------------------
-const getIdMissionResult = asyncHandler(async (req, res, next) => {
-  const { sessionId } = req.params;
-  if (!sessionId) return next(new CustomError(400, "Session ID is required"));
-  // Retrieve verification results from IDMission
-  const result = await idMissionService.getVerificationResults(sessionId);
-  if (!result.success) return next(new CustomError(400, "Failed to get verification results"));
-  if (result.verified) {
-    messageStore.addMessage(sessionId, "idmission_verification_complete", {
-      sessionId: sessionId,
-      timestamp: new Date().toISOString(),
-      status: "verified",
-      idData: result?.idData,
-    });
-  }
-  return res.status(200).json({
+  // resp.data.qr_code could be a Base64 string, or resp.data.link_url
+  res.json({
     success: true,
-    message: "Verification results retrieved successfully",
-    result,
+    data: response.data,
   });
 });
 
-// get id mission session
-const getIdMissionSession = asyncHandler(async (req, res, next) => {
-  const apiKeyId = getEnv("IDMISSION_API_KEY_ID");
-  const apiKeySecret = getEnv("IDMISSION_API_KEY_SECRET");
-  if (!apiKeyId || !apiKeySecret) return next(new CustomError(400, "Missing required IDMission environment variables"));
-  const session = await new IDmissionSessionGenerator({ apiKeyId, apiKeySecret }).generate();
-  if (!session) return next(new CustomError(400, "Failed to generate IDMission session"));
-  return res.status(200).json({ success: true, session });
+// id mission webhook
+// ==============================
+const idMissionWebhook = asyncHandler(async (req, res) => {
+  const result = req.body;
+
+  console.log("webhook recieved", result);
+  if (result?.status == "ID submitted") {
+    // save the data of this id
+  }
+  res.status(200).json({ status_code: 0, status_message: "Success" });
 });
 
-export { createIdMissionSession, getIdMissionResult, verifyEmail, verifyPhone, getIdMissionSession };
+// get proceed data
+// ================
+const getProceedData = asyncHandler(async (req, res) => {
+  const accessToken = await getAccessToken();
+  // const response = await axios.post(
+  //   "https://api.idmission.com/v4/customer/get-processed-data",
+  //   {
+  //     additionalData: {
+  //       verificationResultId: "140903205",
+  //       sendProcessedImages: "N",
+  //       stripSpecialCharacters: "Y",
+  //     },
+  //   },
+  //   {
+  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+  //   }
+  // );
+
+  const url = "https://api.idmission.com/v4/customer";
+
+  const resp = await axios.delete(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      customer: {
+        client_customer_number: "686658c5bbfafad76e4fd47a",
+      },
+    },
+  });
+
+  res.status(200).send(resp);
+});
+
+export { createIDmissionSession, idMissionWebhook, getProceedData };
+
+const getAccessToken = async () => {
+  const clientId = getEnv("IDMISSION_CLIENT_ID");
+  const clientSecret = getEnv("IDMISSION_CLIENT_SECRET");
+  const tokenUrl = "https://auth.idmission.com/auth/realms/identity/protocol/openid-connect/token";
+
+  const form = {
+    grant_type: "password",
+    scop: "api_access",
+    client_id: clientId,
+    client_secret: clientSecret,
+    username: getEnv("IDMISSION_LOGIN_ID"),
+    password: getEnv("IDMISSION_PASSWORD"),
+  };
+
+  const resp = await axios.post(tokenUrl, qs.stringify(form), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  return resp?.data?.access_token;
+};
