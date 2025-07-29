@@ -5,8 +5,8 @@ import { Auth } from "../../auth/schemas/auth.model.js";
 import { removeFromCloudinary, uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import { JWTService } from "../../../global/utils/jwtService.js";
-import { sendToken } from "../utils/sendToken.js";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
+import { sendToken } from "../../../global/utils/sendToken.js";
 
 // login
 // ------

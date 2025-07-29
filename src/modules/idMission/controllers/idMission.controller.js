@@ -1,50 +1,49 @@
 import axios from "axios";
-import { getEnv } from "../../../configs/config.js";
+import { Otp } from "../../../global/schemas/otp.model.js";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
+import { sendMail } from "../../../global/utils/sendMail.js";
+import { Auth } from "../../auth/schemas/auth.model.js";
+import { sendToken } from "../../../global/utils/sendToken.js";
+import { getAccessToken } from "../utils/idMission.js";
 import { CustomError } from "../../../global/utils/customError.js";
-import qs from "qs";
+import { Role } from "../../role/schemas/role.model.js";
 
 // create id mission verification link and qr code
 // ===============================================
 const createIDmissionSession = asyncHandler(async (req, res, next) => {
   const user = req.user;
   const accessToken = await getAccessToken();
-
   const response = await axios.post(
     "https://api.idmission.com/v4/customer/generate-identity-link",
     {
       customerData: {
         requestType: "IDV-FACE",
-        personalData: {
-          uniqueNumber: user?.id,
-        },
-        additionalData: {
-          clientRequestID: user?._id,
-          notifyLink: true,
-        },
+        personalData: { uniqueNumber: user?.id },
+        additionalData: { clientRequestID: user?._id, notifyLink: true },
       },
-      metadata: { source: "web" },
+      metadata: { source: "web", customer: { email: user?.email, _id: user?._id } },
+      POST_Data_API_Required: "Y",
     },
-    {
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    }
+    { headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` } }
   );
-
-  // resp.data.qr_code could be a Base64 string, or resp.data.link_url
-  res.json({
-    success: true,
-    data: response.data,
-  });
+  if (!response?.data) return next(new CustomError(400, "Error While Creating IDmission Session"));
+  res.json({ success: true, data: response?.data });
 });
 
 // id mission webhook
 // ==============================
 const idMissionWebhook = asyncHandler(async (req, res) => {
-  const result = req.body;
+  let result = req.body;
+  if (result.Form_Data) {
+    result.Form_Data.Image_Front = "";
+    result.Form_Data.Image_ProcessedFront = "";
+    result.Form_Data.Image_Back = "";
+    result.Form_Data.Image_ProcessedBack = "";
+    result.Form_Data.Live_Customer_Photo = "";
+  }
 
   console.log("webhook recieved", result);
   if (result?.status == "ID submitted") {
-    // save the data of this id
   }
   res.status(200).json({ status_code: 0, status_message: "Success" });
 });
@@ -53,55 +52,64 @@ const idMissionWebhook = asyncHandler(async (req, res) => {
 // ================
 const getProceedData = asyncHandler(async (req, res) => {
   const accessToken = await getAccessToken();
-  // const response = await axios.post(
-  //   "https://api.idmission.com/v4/customer/get-processed-data",
-  //   {
-  //     additionalData: {
-  //       verificationResultId: "140903205",
-  //       sendProcessedImages: "N",
-  //       stripSpecialCharacters: "Y",
-  //     },
-  //   },
-  //   {
-  //     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-  //   }
-  // );
-
-  const url = "https://api.idmission.com/v4/customer";
-
-  const resp = await axios.delete(url, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    data: {
-      customer: {
-        client_customer_number: "686658c5bbfafad76e4fd47a",
+  const response = await axios.post(
+    "https://api.idmission.com/v4/customer/get-processed-data",
+    {
+      additionalData: {
+        verificationResultId: "140903205",
+        sendProcessedImages: "N",
+        stripSpecialCharacters: "Y",
       },
     },
-  });
+    {
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    }
+  );
+
+  // const url = "https://api.idmission.com/v4/customer";
+  // const resp = await axios.delete(url, {
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //     Authorization: `Bearer ${accessToken}`,
+  //   },
+  //   data: {
+  //     customer: {
+  //       client_customer_number: "686658c5bbfafad76e4fd47a",
+  //     },
+  //   },
+  // });
 
   res.status(200).send(resp);
 });
 
-export { createIDmissionSession, idMissionWebhook, getProceedData };
+// send otp on mail
+// ================
+const sendOTPOnMail = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  if (!email) return next(new CustomError(400, "Please Provide Email"));
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  const newOtp = await Otp.findOneAndUpdate({ email }, { otp }, { upsert: true, new: true });
+  if (!newOtp) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
+  const isMailSent = await sendMail(email, "OTP FOR VERIFICATION", String(otp));
+  if (!isMailSent) return next(new CustomError(400, "Error While Sending Mail"));
+  return res.status(200).json({ success: true, message: "Mail Sent Successfully" });
+});
 
-const getAccessToken = async () => {
-  const clientId = getEnv("IDMISSION_CLIENT_ID");
-  const clientSecret = getEnv("IDMISSION_CLIENT_SECRET");
-  const tokenUrl = "https://auth.idmission.com/auth/realms/identity/protocol/openid-connect/token";
+// verify email and instant login with creating guest user account
+// ==============================================================
+const verifyEmailAndLogin = asyncHandler(async (req, res, next) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return next(new CustomError(400, "Please Provide Email and otp"));
+  const optDoc = await Otp.findOne({ email, otp });
+  if (!optDoc) return next(new CustomError(400, "Invalid Otp"));
+  let user = await Auth.findOne({ email });
+  if (!user?._id) {
+    const role = await Role.findOneAndUpdate({ name: "guest" }, { name: "guest" }, { upsert: true, new: true });
+    if (!role) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
+    user = await Auth.create({ firstName: "Guest", lastName: "User", role: role?._id, password: "guest", email });
+  }
+  if (!user) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
+  await sendToken(res, next, user, 200, "Email Verified Successfully");
+});
 
-  const form = {
-    grant_type: "password",
-    scop: "api_access",
-    client_id: clientId,
-    client_secret: clientSecret,
-    username: getEnv("IDMISSION_LOGIN_ID"),
-    password: getEnv("IDMISSION_PASSWORD"),
-  };
-
-  const resp = await axios.post(tokenUrl, qs.stringify(form), {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
-  return resp?.data?.access_token;
-};
+export { createIDmissionSession, getProceedData, idMissionWebhook, sendOTPOnMail, verifyEmailAndLogin };

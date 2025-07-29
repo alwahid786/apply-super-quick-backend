@@ -1,7 +1,7 @@
-import { getEnv } from "../../../configs/config.js";
-import { accessTokenOptions, refreshTokenOptions } from "../../../configs/constants.js";
-import { JWTService } from "../../../global/utils/jwtService.js";
-import { CustomError } from "../../../global/utils/customError.js";
+import { JWTService } from "./jwtService.js";
+import { CustomError } from "./customError.js";
+import { accessTokenOptions, refreshTokenOptions } from "../../configs/constants.js";
+import { getEnv } from "../../configs/config.js";
 
 const sendToken = async (res, next, user, statusCode, message) => {
   const accessToken = await JWTService().accessToken(String(user?._id));

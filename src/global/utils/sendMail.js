@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { getEnv } from "../configs/config.js";
+import { getEnv } from "../../configs/config.js";
 
 const transporter = nodemailer.createTransport({
   host: getEnv("NODEMAILER_HOST"),
@@ -18,8 +18,7 @@ const sendMail = async (to, subject, text, html = false) => {
       from: getEnv("NODEMAILER_FROM"),
       to,
       subject,
-      text: html ? undefined : text,
-      html: html ? text : undefined,
+      text,
     });
     return true;
   } catch (error) {
