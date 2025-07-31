@@ -28,7 +28,7 @@ app.get("/my", isAuthenticated, isAuthorized(read_form), getMyallForms);
 app
   .route("/single/:formId")
   .delete(isAuthenticated, isAuthorized(delete_form), deleteSingleForm)
-  .get(isAuthenticated, isAuthorized(read_form), getSingleForm);
+  .get(isAuthenticated, getSingleForm);
 
 app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
 app.post("/submit-article", isAuthenticated, isAuthorized(submit_form), singleUpload, submitFormArticleFile);

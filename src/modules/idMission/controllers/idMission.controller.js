@@ -7,6 +7,7 @@ import { sendToken } from "../../../global/utils/sendToken.js";
 import { getAccessToken } from "../utils/idMission.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import { Role } from "../../role/schemas/role.model.js";
+import { emitToUser, getIO } from "../../../global/utils/socketIo.js";
 
 // create id mission verification link and qr code
 // ===============================================
@@ -28,24 +29,6 @@ const createIDmissionSession = asyncHandler(async (req, res, next) => {
   );
   if (!response?.data) return next(new CustomError(400, "Error While Creating IDmission Session"));
   res.json({ success: true, data: response?.data });
-});
-
-// id mission webhook
-// ==============================
-const idMissionWebhook = asyncHandler(async (req, res) => {
-  let result = req.body;
-  if (result.Form_Data) {
-    result.Form_Data.Image_Front = "";
-    result.Form_Data.Image_ProcessedFront = "";
-    result.Form_Data.Image_Back = "";
-    result.Form_Data.Image_ProcessedBack = "";
-    result.Form_Data.Live_Customer_Photo = "";
-  }
-
-  console.log("webhook recieved", result);
-  if (result?.status == "ID submitted") {
-  }
-  res.status(200).json({ status_code: 0, status_message: "Success" });
 });
 
 // get proceed data
@@ -110,6 +93,32 @@ const verifyEmailAndLogin = asyncHandler(async (req, res, next) => {
   }
   if (!user) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
   await sendToken(res, next, user, 200, "Email Verified Successfully");
+});
+
+// id mission webhook
+// ==============================
+const idMissionWebhook = asyncHandler(async (req, res) => {
+  let result = req.body;
+  if (result?.Form_Data) {
+    result.Form_Data.Image_Front = "";
+    result.Form_Data.Image_ProcessedFront = "";
+    result.Form_Data.Image_Back = "";
+    result.Form_Data.Image_ProcessedBack = "";
+    result.Form_Data.Live_Customer_Photo = "";
+  }
+
+  console.log("webhook recieved", result);
+  if (result?.status === "ID processing started") {
+    emitToUser(result?.clientCustomerNumber, "idMission_processing_started", result);
+  }
+  if (result?.Form_Status === "Approved") {
+    emitToUser(result?.Form_Data?.Client_Customer_Number, "idMission_verified", result);
+  }
+  if (result?.Form_Status === "Expired ID") {
+    emitToUser(result?.Form_Data?.Client_Customer_Number, "idMission_failed", result);
+  }
+
+  res.status(200).json({ status_code: 0, status_message: "Success" });
 });
 
 export { createIDmissionSession, getProceedData, idMissionWebhook, sendOTPOnMail, verifyEmailAndLogin };
