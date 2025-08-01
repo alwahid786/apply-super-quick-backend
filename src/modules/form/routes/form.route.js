@@ -30,8 +30,8 @@ app
   .delete(isAuthenticated, isAuthorized(delete_form), deleteSingleForm)
   .get(isAuthenticated, getSingleForm);
 
-app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
-app.post("/submit-article", isAuthenticated, isAuthorized(submit_form), singleUpload, submitFormArticleFile);
+app.post("/submit", isAuthenticated, submitForm);
+app.post("/submit-article", isAuthenticated, singleUpload, submitFormArticleFile);
 app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
 
 // fields related routes
