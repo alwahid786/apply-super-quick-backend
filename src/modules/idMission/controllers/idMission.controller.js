@@ -110,11 +110,15 @@ const idMissionWebhook = asyncHandler(async (req, res) => {
   console.log("webhook recieved", result);
   if (result?.status === "ID processing started") {
     emitToUser(result?.clientCustomerNumber, "idMission_processing_started", result);
-  }
-  if (result?.Form_Status === "Approved") {
+  } else if (result?.Form_Status === "Approved") {
     emitToUser(result?.Form_Data?.Client_Customer_Number, "idMission_verified", result);
-  }
-  if (result?.Form_Status === "Expired ID") {
+  } else if (
+    // result?.Form_Status === "Expired ID" ||
+    // result?.Form_Status === "Suspected Tampering" ||
+    // result?.Form_Status === "Facial Biometric Match Failed"
+    result?.Form_Status &&
+    result?.Form_Status !== "Approved"
+  ) {
     emitToUser(result?.Form_Data?.Client_Customer_Number, "idMission_failed", result);
   }
 
