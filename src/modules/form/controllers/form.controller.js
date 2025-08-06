@@ -12,6 +12,13 @@ import { extractCompanyInfo } from "../utils/extractCompanyDetails.js";
 import mongoose from "mongoose";
 import { openai } from "../../../configs/constants.js";
 import FormBlock from "../schemas/blocks.model.js";
+import { sendMail } from "../../../global/utils/sendMail.js";
+import { Auth } from "../../auth/schemas/auth.model.js";
+import { Role } from "../../role/schemas/role.model.js";
+import { sendToken } from "../../../global/utils/sendToken.js";
+
+let submitId = "";
+let myCloud = "";
 
 const createNewForm = asyncHandler(async (req, res, next) => {
   const user = req?.user;
@@ -81,14 +88,28 @@ const submitForm = asyncHandler(async (req, res, next) => {
   console.log(req.body);
   const { formId, formData } = req.body;
   if (!formId || !formData) return next(new CustomError(400, "Please Provide Form Id and Form Data"));
+  // get emails which are also owner we need to send him a mail
+  const beneficialOwnersEmails = [];
+  if (formData?.beneficial_blk?.additional_owners_own_25_percent_or_more) {
+    formData?.beneficial_blk?.additional_owner?.forEach((owner) => {
+      beneficialOwnersEmails.push(owner?.email);
+    });
+  }
   const isFormExist = await Form.findById(formId);
   if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
   const form = await SubmitForm.create({ formId, submitData: formData, user: userId });
   if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
+  const mailSendPromises = [];
+  beneficialOwnersEmails.forEach((email) => {
+    const link = `http://localhost:5173/singleForm/owner?email=${email}&submitId=${form?._id}&userId=${userId}`;
+    mailSendPromises.push(
+      sendMail(email, "Form Submitted Successfully", `click on this link to verify your details : ${link}`)
+    );
+  });
+  await Promise.all(mailSendPromises);
   return res.status(200).json({ success: true, message: "Form Submitted Successfully", data: form });
 });
-let submitId = "";
-let myCloud = "";
+
 const submitFormArticleFile = asyncHandler(async (req, res, next) => {
   try {
     const file = req.file;
@@ -289,6 +310,57 @@ Text to format: ${text}`;
   return res.status(200).json({ success: true, data: result.choices[0].message.content });
 });
 
+// for getting beneficial owners information
+const getBeneficialOwnersInfo = asyncHandler(async (req, res, next) => {
+  const { userId, submitId, email } = req.query;
+  console.log(req.query);
+  if (!isValidObjectId(userId) || !isValidObjectId(submitId) || !email)
+    return next(new CustomError(400, "Invalidate data"));
+  const submittedForm = await SubmitForm.findOne({ _id: submitId, user: userId });
+  if (!submittedForm) return next(new CustomError(400, "Form Not Found"));
+  const beneficialOwners = submittedForm?.submitData?.beneficial_blk?.additional_owner;
+  if (!beneficialOwners?.length) return next(new CustomError(400, "No Beneficial Owners Found"));
+  const currentOwnerData = beneficialOwners.find((owner) => owner?.email === email);
+  if (!currentOwnerData) return next(new CustomError(400, "Beneficial Owner Not Found"));
+  // create user as a guest user and send tokens
+  let user = await Auth.findOne({ email });
+  if (!user?._id) {
+    const role = await Role.findOneAndUpdate({ name: "guest" }, { name: "guest" }, { upsert: true, new: true });
+    if (!role) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
+    user = await Auth.create({ firstName: "Guest", lastName: "User", role: role?._id, password: "guest", email });
+  }
+  if (!user) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
+  return sendToken(res, next, user, 200, "Beneficial Owner Found", currentOwnerData);
+});
+
+// for getting beneficial owners information
+const addBeneficialOwnersInfo = asyncHandler(async (req, res, next) => {
+  const { userId, submitId } = req.query;
+  if (!isValidObjectId(userId) || !isValidObjectId(submitId)) return next(new CustomError(400, "Invalid data"));
+  const { name, email, ssn, percentage, isVerified, idMissionData } = req.body;
+  if (!name || !email || !ssn || percentage === undefined || !idMissionData)
+    return next(new CustomError(400, "Please fill all required fields"));
+  const submittedForm = await SubmitForm.findOne({ _id: submitId, user: userId });
+  if (!submittedForm) return next(new CustomError(404, "Form Not Found"));
+  const beneficialOwners = submittedForm?.submitData?.beneficial_blk?.additional_owner;
+  if (!beneficialOwners?.length) return next(new CustomError(400, "No Beneficial Owners Found"));
+  const currentOwnerDataIndex = beneficialOwners.findIndex((owner) => owner?.email === email);
+  if (currentOwnerDataIndex === -1) return next(new CustomError(404, "Beneficial Owner Not Found"));
+
+  // Update owner data
+  beneficialOwners[currentOwnerDataIndex] = {
+    ...beneficialOwners[currentOwnerDataIndex],
+    name,
+    ssn,
+    percentage,
+    isVerified,
+    idMissionData,
+  };
+  submittedForm.markModified("submitData.beneficial_blk.additional_owner");
+  await submittedForm.save();
+  return res.status(200).json({ success: true, message: "Beneficial Owner Updated Successfully" });
+});
+
 export {
   createNewForm,
   deleteSingleForm,
@@ -305,4 +377,7 @@ export {
   deleteSingleFormField,
   // other form related ai things
   formateTextInMarkDown,
+  // for getting and updating beneficial owners info
+  getBeneficialOwnersInfo,
+  addBeneficialOwnersInfo,
 };

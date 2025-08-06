@@ -7,7 +7,7 @@ import { sendToken } from "../../../global/utils/sendToken.js";
 import { getAccessToken } from "../utils/idMission.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import { Role } from "../../role/schemas/role.model.js";
-import { emitToUser, getIO } from "../../../global/utils/socketIo.js";
+import { emitToUser } from "../../../global/utils/socketIo.js";
 
 // create id mission verification link and qr code
 // ===============================================

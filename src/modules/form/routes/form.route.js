@@ -2,11 +2,13 @@ import express from "express";
 import { webPermissions } from "../../../configs/permissions.js";
 import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddleware.js";
 import {
+  addBeneficialOwnersInfo,
   addNewFormField,
   createNewForm,
   deleteSingleForm,
   deleteSingleFormField,
   formateTextInMarkDown,
+  getBeneficialOwnersInfo,
   getCompanyDetailsByUrl,
   getMyallForms,
   getSingleForm,
@@ -33,6 +35,9 @@ app
 app.post("/submit", isAuthenticated, submitForm);
 app.post("/submit-article", isAuthenticated, singleUpload, submitFormArticleFile);
 app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
+// for getting and updating beneficial owners info
+app.get("/beneficial-owners", getBeneficialOwnersInfo);
+app.put("/beneficial-owners", addBeneficialOwnersInfo);
 
 // fields related routes
 app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(create_form), updateAddDeleteMultipleFields);
