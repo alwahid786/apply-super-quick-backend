@@ -8,113 +8,7 @@ import {
 } from "./staticFields.js";
 import mongoose from "mongoose";
 
-const applicantIsMainOwnerFields = [
-  {
-    label: "Name (main owner)",
-    type: "text",
-    name: "main_owner_name",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Email Address (main owner)",
-    type: "email",
-    name: "main_owner_email",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "SSN (main owner)",
-    type: "text",
-    name: "main_owner_ssn",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-  },
-  {
-    label: "Ownership Percentage (main owner)?",
-    type: "range",
-    name: "main owner_percentage_value",
-    minValue: 0,
-    maxValue: 100,
-    defaultValue: 0,
-    required: false,
-    aiHelp: false,
-  },
-];
-const applicantIsNotMainOwnerFields = [
-  {
-    label: "Name (your)",
-    type: "text",
-    name: "your_name",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Email Address (your)",
-    type: "email",
-    name: "your_email",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "SSN (your)",
-    type: "text",
-    name: "your_ssn",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-  },
-  {
-    label: "Ownership Percentage (your)?",
-    type: "range",
-    name: "main your_percentage_value",
-    minValue: 0,
-    maxValue: 100,
-    defaultValue: 0,
-    required: false,
-    aiHelp: false,
-  },
-
-  {
-    label: "Name (main owner)",
-    type: "text",
-    name: "main_owner_name1",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Email Address (main owner)",
-    type: "email",
-    name: "main_owner_email1",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "SSN (main owner)",
-    type: "text",
-    name: "main_owner_ssn1",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-  },
-  {
-    label: "Ownership Percentage (main owner)?",
-    type: "range",
-    name: "main owner_percentage_value1",
-    minValue: 0,
-    maxValue: 100,
-    defaultValue: 0,
-    required: false,
-    aiHelp: false,
-  },
-];
+import { applicantIsMainOwnerFields, applicantIsNotMainOwnerFields } from "./staticFields.js";
 
 function convertCsvToActualFormData(csvInput) {
   // Ensure it's a string for the CSV parser
@@ -160,7 +54,7 @@ function convertCsvToActualFormData(csvInput) {
         const fields = [];
         const blocks = [];
         const applicantIsMainOwnerFieldsBlock = {
-          name: "applicant_is_main_owner",
+          name: "applicant_is_primary_operator_or_owner_with_more_then_25percentage",
           fields: [],
         };
         const applicantIsNotMainOwnerBlock = {
@@ -209,6 +103,7 @@ function convertCsvToActualFormData(csvInput) {
       if (row?.field_name) formFieldObj.name = row?.field_name;
       if (row?.field_type) formFieldObj.type = row?.field_type;
       if (row?.field_required) formFieldObj.required = row?.field_required == "TRUE" ? true : false;
+      if (row?.field_masked) formFieldObj.isMasked = row?.field_masked == "TRUE" ? true : false;
       if (row?.field_placeholder) formFieldObj.placeholder = row?.field_placeholder;
       if (ai_formatting) formFieldObj.ai_formatting = ai_formatting;
       if (ai_support) formFieldObj.ai_support = ai_support;

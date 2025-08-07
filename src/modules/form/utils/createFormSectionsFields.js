@@ -35,6 +35,7 @@ const createFormSectionsFields = (formData, user) => {
           if (field?.minValue) singleField.minValue = field?.minValue;
           if (field?.maxValue) singleField.maxValue = field?.maxValue;
           if (field?.defaultValue) singleField.defaultValue = field?.defaultValue;
+          if (field?.isMasked) singleField.isMasked = field?.isMasked;
           if (field?.aiPrompt) singleField.aiPrompt = field?.aiPrompt;
           if (field?.aiResponse) singleField.aiResponse = field?.aiResponse;
           if (field?.displayText) singleField.displayText = field?.displayText;

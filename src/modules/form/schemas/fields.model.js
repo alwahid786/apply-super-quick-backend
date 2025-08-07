@@ -19,6 +19,7 @@ export const formFieldSchema = new mongoose.Schema(
     minValue: { type: Number },
     maxValue: { type: Number },
     defaultValue: { type: String },
+    isMasked: { type: Boolean, default: false },
     // additional fields for AI support
     aiPrompt: { type: String },
     aiResponse: { type: String },
