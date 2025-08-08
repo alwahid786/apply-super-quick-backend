@@ -8,7 +8,7 @@ import {
 } from "./staticFields.js";
 import mongoose from "mongoose";
 
-import { applicantIsMainOwnerFields, applicantIsNotMainOwnerFields } from "./staticFields.js";
+import { applicantIsMainOwnerFields } from "./staticFields.js";
 
 function convertCsvToActualFormData(csvInput) {
   // Ensure it's a string for the CSV parser
@@ -45,7 +45,6 @@ function convertCsvToActualFormData(csvInput) {
       if (ai_support) currentSection.ai_support = ai_support;
       const display_text = row?.display_text?.split(":")?.[0] == "section" ? row?.display_text?.split(":")?.[1] : null;
       if (display_text) currentSection.display_text = display_text;
-
       // now define some fields for static blocks
       // ---------------------------------------
       if (title == "company_information_blk") {
@@ -57,25 +56,12 @@ function convertCsvToActualFormData(csvInput) {
           name: "applicant_is_primary_operator_or_owner_with_more_then_25percentage",
           fields: [],
         };
-        const applicantIsNotMainOwnerBlock = {
-          name: "applicant_is_not_main_owner",
-          fields: [],
-        };
-
         applicantIsMainOwnerFields.forEach((singleField) => {
           const fieldId = new mongoose.Types.ObjectId();
           applicantIsMainOwnerFieldsBlock.fields.push(fieldId);
           fields.push({ _id: fieldId, ...singleField });
         });
-        applicantIsNotMainOwnerFields.forEach((singleField) => {
-          const fieldId = new mongoose.Types.ObjectId();
-          applicantIsNotMainOwnerBlock.fields.push(fieldId);
-          fields.push({ _id: fieldId, ...singleField });
-        });
-
         blocks.push(applicantIsMainOwnerFieldsBlock);
-        blocks.push(applicantIsNotMainOwnerBlock);
-
         currentSection.fields = [...beneficial_fields, ...fields];
         currentSection.blocks = blocks;
       } else if (title == "bank_account_info_blk") {

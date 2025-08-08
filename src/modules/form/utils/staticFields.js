@@ -249,24 +249,7 @@ const articleOfIncorporation_fields = [
     aiHelp: false,
   },
 ];
-
 const applicantIsMainOwnerFields = [
-  {
-    label: "Enter your full name",
-    type: "text",
-    name: "applicant_name",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Enter your email address",
-    type: "email",
-    name: "applicant_email",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
   {
     label: "Please provide your Social Security Number (SSN).",
     type: "text",
@@ -288,80 +271,6 @@ const applicantIsMainOwnerFields = [
     aiHelp: false,
   },
 ];
-const applicantIsNotMainOwnerFields = [
-  {
-    label: "Name (your)",
-    type: "text",
-    name: "your_name",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Email Address (your)",
-    type: "email",
-    name: "your_email",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "Please provide your Social Security Number (SSN)?",
-    type: "text",
-    name: "your_ssn",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-    isMasked: true,
-  },
-
-  {
-    label: "What is your exact ownership percentage in the company? Enter 0 if none?",
-    type: "range",
-    name: "main your_percentage_value",
-    minValue: 0,
-    maxValue: 100,
-    defaultValue: 0,
-    required: false,
-    aiHelp: false,
-  },
-
-  {
-    label: "Name (main owner)",
-    type: "text",
-    name: "main_owner_name1",
-    required: true,
-    placeholder: "e.g. John Doe",
-    aiHelp: false,
-  },
-  {
-    label: "Email Address (main owner)",
-    type: "email",
-    name: "main_owner_email1",
-    required: true,
-    placeholder: "e.g. 8aQ0A@example.com",
-    aiHelp: false,
-  },
-  {
-    label: "SSN (main owner)",
-    type: "text",
-    name: "main_owner_ssn1",
-    required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-    isMasked: true,
-  },
-  {
-    label: "Ownership Percentage (main owner)?",
-    type: "range",
-    name: "main owner_percentage_value1",
-    minValue: 0,
-    maxValue: 100,
-    defaultValue: 0,
-    required: false,
-    aiHelp: false,
-  },
-];
 export {
   company_info_fields,
   beneficial_fields,
@@ -369,5 +278,4 @@ export {
   average_transaction_fields,
   articleOfIncorporation_fields,
   applicantIsMainOwnerFields,
-  applicantIsNotMainOwnerFields,
 };
