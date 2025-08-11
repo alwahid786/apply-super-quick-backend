@@ -6,7 +6,8 @@ import { fetchBranding } from "../utils/extractTheme.js";
 // extract theme
 // -------------
 const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
-  const { url } = req.query;
+  const { url } = req.body;
+  console.log("req.body", url);
   if (!url) return next(new CustomError(400, "Please Provide url"));
   const data = await fetchBranding(url);
   return res.status(200).json({ success: true, data: data });

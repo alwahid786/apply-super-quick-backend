@@ -14,7 +14,7 @@ const app = express.Router();
 
 const { create_branding, read_branding, update_branding, delete_branding } = webPermissions;
 
-app.get("/extract", isAuthenticated, isAuthorized(read_branding), extractThemeFromUrl);
+app.post("/extract", isAuthenticated, isAuthorized(read_branding), extractThemeFromUrl);
 
 app.post("/create", isAuthenticated, isAuthorized(create_branding), createBranding);
 app
