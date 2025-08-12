@@ -8,6 +8,7 @@ const formSchema = new mongoose.Schema(
     brandingType: { type: String, default: "default" },
     name: { type: String, required: true },
     description: { type: String },
+    branding: { type: mongoose.Schema.Types.ObjectId, ref: "Branding", default: null },
     logo: { type: imageSchema, default: null },
     sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormSection" }],
   },

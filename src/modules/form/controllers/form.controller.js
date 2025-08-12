@@ -59,7 +59,7 @@ const getMyallForms = asyncHandler(async (req, res, next) => {
   const user = req?.user;
   if (!user?._id) return next(new CustomError(400, "User Not Found"));
 
-  const forms = await Form.find({ owner: user?._id });
+  const forms = await Form.find({ owner: user?._id }).populate("branding");
   if (!forms?.length) return next(new CustomError(400, "No Forms Found"));
   return res.status(200).json({ success: true, data: forms });
 });

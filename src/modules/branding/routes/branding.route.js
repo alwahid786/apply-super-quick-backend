@@ -2,6 +2,7 @@ import express from "express";
 import { webPermissions } from "../../../configs/permissions.js";
 import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddleware.js";
 import {
+  addBrandingInForm,
   createBranding,
   deleteSingleBranding,
   extractThemeFromUrl,
@@ -22,6 +23,8 @@ app
   .get(isAuthenticated, isAuthorized(read_branding), getSingleBranding)
   .put(isAuthenticated, isAuthorized(update_branding), updateSingleBranding)
   .delete(isAuthenticated, isAuthorized(delete_branding), deleteSingleBranding);
+
+app.put("/apply/branding", isAuthenticated, isAuthorized(update_branding), addBrandingInForm);
 
 app.get("/all", isAuthenticated, isAuthorized(read_branding), getAllBrandings);
 

@@ -5,7 +5,11 @@ const brandingSchema = new mongoose.Schema(
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
     name: { type: String, required: true },
     url: { type: String, required: true },
-    logo: { type: String, required: true },
+    logos: {
+      type: [{ url: { type: String, required: true }, type: { type: String, required: true } }],
+      default: [],
+    },
+    colorPalette: { type: [String], default: [] },
     colors: {
       primary: { type: String, required: true },
       secondary: { type: String, required: true },
