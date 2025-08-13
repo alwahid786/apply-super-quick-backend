@@ -67,10 +67,12 @@ const getMyallForms = asyncHandler(async (req, res, next) => {
 const getSingleForm = asyncHandler(async (req, res, next) => {
   const formId = req?.params?.formId;
   if (!isValidObjectId(formId)) return next(new CustomError(400, "Invalid Form Id"));
-  const form = await Form.findOne({ _id: formId }).populate({
-    path: "sections",
-    populate: [{ path: "fields" }, { path: "blocks", populate: { path: "fields" } }],
-  });
+  const form = await Form.findOne({ _id: formId })
+    .populate({
+      path: "sections",
+      populate: [{ path: "fields" }, { path: "blocks", populate: { path: "fields" } }],
+    })
+    .populate("branding");
   if (!form) return next(new CustomError(400, "Form Not Found"));
   return res.status(200).json({ success: true, data: form });
 });
