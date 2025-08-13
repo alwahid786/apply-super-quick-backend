@@ -1,5 +1,6 @@
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
+import { Auth } from "../../auth/schemas/auth.model.js";
 import Form from "../../form/schemas/form.model.js";
 import { Branding } from "../schemas/branding.schema.js";
 import { fetchBranding } from "../utils/extractTheme.js";
@@ -118,15 +119,25 @@ const getAllBrandings = asyncHandler(async (req, res, next) => {
 const addBrandingInForm = asyncHandler(async (req, res, next) => {
   const user = req.user;
   if (!user?._id) return next(new CustomError(400, "User Not Found"));
-  const { brandingId, formId } = req.body;
-  if (!brandingId || !formId) return next(new CustomError(400, "Branding ID and Form ID are required"));
-  const updateForm = await Form.findOneAndUpdate(
-    { _id: formId, owner: user._id },
-    { branding: brandingId },
-    { new: true }
-  );
-  if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
-  return res.status(200).json({ success: true, message: "Branding applied to form successfully" });
+  const { brandingId, formId, onHome } = req.body;
+  if (!brandingId) return next(new CustomError(400, "Branding ID and Form ID are required"));
+  if (!formId && !onHome == "yes") return next(new CustomError(400, "Form ID is required if onHome is not provided"));
+  let message = "";
+  if (formId) {
+    const updateForm = await Form.findOneAndUpdate(
+      { _id: formId, owner: user._id },
+      { branding: brandingId },
+      { new: true }
+    );
+    if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
+    message = "Branding applied to form successfully";
+  }
+  if (onHome == "yes") {
+    const updateUser = await Auth.findOneAndUpdate({ _id: user._id }, { branding: brandingId }, { new: true });
+    if (!updateUser) return next(new CustomError(400, "User Not Found or User Not Authorized"));
+    message = "Branding applied to user successfully";
+  }
+  return res.status(200).json({ success: true, message });
 });
 
 export {

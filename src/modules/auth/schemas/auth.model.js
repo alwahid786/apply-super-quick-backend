@@ -14,6 +14,7 @@ const authSchema = new mongoose.Schema(
     image: { type: imageSchema },
     password: { type: String, required: true, select: false },
     role: { type: Types.ObjectId, ref: "Role", required: true },
+    branding: { type: Types.ObjectId, ref: "Branding" },
     otp: { type: String, default: "" },
   },
   { timestamps: true }
