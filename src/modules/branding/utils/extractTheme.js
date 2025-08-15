@@ -69,16 +69,27 @@ function rgbToHex(color) {
   );
 }
 export async function fetchBranding(url) {
-  const browser = await puppeteer.launch({
+  let browser = null;
+
+  const launchOptions = {
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    // executablePath: '/path/to/chrome'
-  });
-  const page = await browser.newPage();
-  page.setDefaultNavigationTimeout(0);
-  page.setDefaultTimeout(0);
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--single-process",
+      "--disable-accelerated-2d-canvas",
+      "--no-zygote",
+    ],
+    // executablePath will be used if CHROME_PATH is set; otherwise Puppeteer tries to use its bundled Chromium
+    ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}),
+  };
 
   try {
+    browser = await puppeteer.launch(launchOptions);
+    const page = await browser.newPage();
+    page.setDefaultNavigationTimeout(0);
+    page.setDefaultTimeout(0);
     await page.goto(url, { waitUntil: ["domcontentloaded"], timeout: 0 });
     await page.waitForSelector("body", { timeout: 5000 });
 
