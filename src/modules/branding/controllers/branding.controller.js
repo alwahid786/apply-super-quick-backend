@@ -8,7 +8,11 @@ import { fetchBranding } from "../utils/extractTheme.js";
 // extract theme
 // -------------
 const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
-  const { url } = req.body;
+  let { url } = req.body;
+  if (!url) return next(new CustomError(400, "Please Provide url"));
+  if (url.startsWith("http://")) return next(new CustomError(400, "Please Provide https url"));
+  if (!url.startsWith("https://")) url = `https://${url}`;
+
   console.log("req.body", url);
   if (!url) return next(new CustomError(400, "Please Provide url"));
   const data = await fetchBranding(url);
