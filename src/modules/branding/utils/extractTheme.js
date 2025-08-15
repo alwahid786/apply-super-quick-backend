@@ -2,66 +2,6 @@ import puppeteer from "puppeteer";
 import getColors from "get-image-colors";
 import { openai } from "../../../configs/constants.js";
 
-async function validateLogoColors(url, colors) {
-  if (typeof url !== "string" || !url.startsWith("http")) throw new Error("A valid website URL is required");
-  if (!Array.isArray(colors)) throw new Error("An array of HEX color strings is required");
-  // Function schema: model returns only filteredColors[]
-  const functions = [
-    {
-      name: "filterLogoColors",
-      description: "Remove any colors not found in the website’s logos",
-      parameters: {
-        type: "object",
-        properties: {
-          filteredColors: {
-            type: "array",
-            description: "Input colors filtered to only those present in logos",
-            items: { type: "string" },
-          },
-        },
-        required: ["filteredColors"],
-      },
-    },
-  ];
-
-  // Ask GPT-4o to fetch the URL, detect all logo assets,
-  // check which of the provided colors appear in those logos,
-  // and return only the matching subset.
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      {
-        role: "system",
-        content: `
-You are a web‑verification assistant.
-Given:
-  • A website URL
-  • An array of candidate HEX color codes
-You must:
-  1) Fetch the live page.
-  2) Locate every logo asset (favicons, <img> logos, CSS/SVG logos).
-  3) Sample the colors from those logos.
-  4) Compare against the input array and remove any colors not present.
-Return exactly one function call to "filterLogoColors" with property "filteredColors" (no extra fields).
-`,
-      },
-      {
-        role: "user",
-        content: JSON.stringify({ url, colors }),
-      },
-    ],
-    functions,
-    function_call: { name: "filterLogoColors" },
-  });
-
-  // Parse and return the filteredColors array
-  const fnCall = completion.choices?.[0]?.message?.function_call;
-  if (!fnCall?.arguments) {
-    throw new Error("Logo color validation failed");
-  }
-  const { filteredColors } = JSON.parse(fnCall.arguments);
-  return filteredColors;
-}
 async function filterColorsByLogosWithAI(colors, logos) {
   if (!Array.isArray(colors) || !Array.isArray(logos))
     throw new Error("colors must be an array and logos must be an array of {url:string}");
@@ -239,11 +179,9 @@ export async function fetchBranding(url) {
       } catch {}
     }
     let logoHexes = [...new Set(logoColors)];
-    // pad logoHexes from screenshotHexes
     for (const hex of screenshotHexes) {
       if (!logoHexes.includes(hex)) logoHexes.push(hex);
     }
-    // const filteredLoosColors = await validateLogoColors(url, logoHexes);
     const filteredLoosColors = await filterColorsByLogosWithAI(logoHexes, logos);
 
     const title = await page.title();
