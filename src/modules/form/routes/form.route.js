@@ -19,6 +19,12 @@ import {
   updateSingleFormField,
 } from "../controllers/form.controller.js";
 import { singleUpload } from "../../../middlewares/multer.js";
+import {
+  createSearchStrategy,
+  deleteSearchStrategy,
+  getAllSearchStrategies,
+  updateSearchStrategy,
+} from "../controllers/searchStrategies.controller.js";
 
 const { create_form, read_form, delete_form, submit_form } = webPermissions;
 
@@ -51,5 +57,15 @@ app
 
 // other form related ai things
 app.post("/formate-display-text", isAuthenticated, isAuthorized(create_form), formateTextInMarkDown);
+
+// routes for search strategies
+// ============================
+app.get("/search-strategy/all", isAuthenticated, getAllSearchStrategies);
+app.post("/search-strategy/create", isAuthenticated, createSearchStrategy);
+app
+  .route("/search-strategy/single/:SearchStrategyId")
+  .get(isAuthenticated, createSearchStrategy)
+  .put(isAuthenticated, updateSearchStrategy)
+  .delete(isAuthenticated, deleteSearchStrategy);
 
 export default app;
