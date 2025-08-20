@@ -2,6 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import SearchStrategy from "../schemas/searchStrategies.model.js";
+import Prompt from "../schemas/prompts.model.js";
 
 // get all search strategies
 // ==========================================
@@ -107,10 +108,86 @@ const deleteSearchStrategy = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message: "Search strategy deleted successfully" });
 });
 
+// create prompt
+// ==========================================
+const createPrompt = asyncHandler(async (req, res, next) => {
+  const { prompt, name } = req.body;
+  if (!prompt || !name) return next(new CustomError(400, "Prompt and name is required"));
+  const isExist = await Prompt.findOne({ owner: req?.user?._id, name });
+  if (isExist) return next(new CustomError(400, "Prompt already exist"));
+  const newPrompt = await Prompt.create({ owner: req?.user?._id, prompt, name });
+  if (!newPrompt) return next(new CustomError(500, "Failed to create prompt"));
+  return res.status(200).json({ success: true, message: "Prompt created successfully" });
+});
+// update prompt
+// ==========================================
+const updatePrompt = asyncHandler(async (req, res, next) => {
+  const { prompt, name, section } = req.body;
+  console.log("req.body", req.body);
+  if (!prompt || !name || !section) return next(new CustomError(400, "Prompt, name and section is required"));
+  const isExist = await Prompt.findOne({ owner: req?.user?._id, name });
+  if (!isExist) return next(new CustomError(400, "Prompt not found"));
+  const updatedPrompt = await Prompt.findOneAndUpdate(
+    { owner: req?.user?._id, name },
+    { prompt, section },
+    { new: true }
+  );
+  if (!updatedPrompt) return next(new CustomError(500, "Failed to update prompt"));
+  return res.status(200).json({ success: true, message: "Prompt updated successfully" });
+});
+// get all my prompts
+// ==========================================
+const getMyAllPrompts = asyncHandler(async (req, res, next) => {
+  const prompts = await Prompt.find({ owner: req?.user?._id });
+  if (!prompts) return next(new CustomError(500, "Failed to get prompts"));
+  return res.status(200).json({ success: true, data: prompts });
+});
+
+// company verification
+// ==========================================
+const verifyCompany = asyncHandler(async (req, res, next) => {
+  console.log("\n🔍 [STEP 1] Starting company verification process");
+  console.log("📥 [REQUEST] Raw request body:", JSON.stringify(req.body, null, 2));
+
+  try {
+    // Validate request body (only require companyName and websiteUrl for Step 1)
+    console.log("🔎 [VALIDATION] Validating Step 1 data...");
+    const validatedData = verifyCompanySchema.parse(req.body);
+    console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(validatedData, null, 2));
+
+    const response = await verifyCompanyInformation(validatedData);
+    console.log("📊 [STEP 1 COMPLETE] Verification result:", JSON.stringify(response, null, 2));
+
+    // Store the verification result
+    console.log("💾 [STORAGE] Storing Step 1 verification result...");
+    const storedVerification = await storage.createCompanyVerification({
+      originalCompanyName: response.originalCompanyName,
+      verifiedCompanyName: response.originalCompanyName, // Keep original for now
+      originalUrl: response.originalUrl,
+      verifiedUrl: response.originalUrl, // Keep original for now
+      isCompanyNameVerified: response.verificationStatus === "verified",
+      isUrlVerified: response.verificationStatus === "verified",
+      wasCompanyNameUpdated: false, // No updates in verification mode
+      wasUrlFound: !!response.originalUrl,
+    });
+    console.log("✅ [STORAGE] Step 1 verification stored with ID:", storedVerification.id);
+
+    res.json(response);
+  } catch (error) {
+    console.error("❌ [ERROR] Step 1 verification failed:", error);
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Failed to verify company information",
+    });
+  }
+});
 export {
   getAllSearchStrategies,
   createSearchStrategy,
   updateSearchStrategy,
   deleteSearchStrategy,
   getSingleSearchStrategy,
+  verifyCompany,
+  createPrompt,
+  updatePrompt,
+  getMyAllPrompts,
 };

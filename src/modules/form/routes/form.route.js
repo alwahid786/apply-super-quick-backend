@@ -20,10 +20,14 @@ import {
 } from "../controllers/form.controller.js";
 import { singleUpload } from "../../../middlewares/multer.js";
 import {
+  createPrompt,
   createSearchStrategy,
   deleteSearchStrategy,
   getAllSearchStrategies,
+  getMyAllPrompts,
+  updatePrompt,
   updateSearchStrategy,
+  verifyCompany,
 } from "../controllers/searchStrategies.controller.js";
 
 const { create_form, read_form, delete_form, submit_form } = webPermissions;
@@ -67,5 +71,13 @@ app
   .get(isAuthenticated, createSearchStrategy)
   .put(isAuthenticated, updateSearchStrategy)
   .delete(isAuthenticated, deleteSearchStrategy);
+
+app.post("/create-prompt", isAuthenticated, createPrompt);
+app.put("/prompt/single/update", isAuthenticated, updatePrompt);
+app.get("/get-my-prompts", isAuthenticated, getMyAllPrompts);
+
+// company verification
+
+app.post("/verify-company", isAuthenticated, verifyCompany);
 
 export default app;
