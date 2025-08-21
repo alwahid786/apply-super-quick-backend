@@ -52,6 +52,11 @@ const config = Object.freeze({
   IDMISSION_API_SECRET: process.env.IDMISSION_API_SECRET,
 
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+
+  // google search api
+  GOOGLE_SEARCH_API_KEY: process.env.GOOGLE_SEARCH_API_KEY,
+  GOOGLE_SEARCH_ENGINE_ID: process.env.GOOGLE_SEARCH_ENGINE_ID,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 });
 
 const getEnv = (key) => {

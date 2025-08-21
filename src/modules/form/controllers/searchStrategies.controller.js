@@ -3,6 +3,8 @@ import { asyncHandler } from "../../../global/utils/asyncHandler.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import SearchStrategy from "../schemas/searchStrategies.model.js";
 import Prompt from "../schemas/prompts.model.js";
+import { verifyCompanyInformation } from "../utils/companyVerification.js";
+import { executeCompanyLookup } from "../utils/companyLookup.js";
 
 // get all search strategies
 // ==========================================
@@ -146,37 +148,86 @@ const getMyAllPrompts = asyncHandler(async (req, res, next) => {
 // company verification
 // ==========================================
 const verifyCompany = asyncHandler(async (req, res, next) => {
-  console.log("\n🔍 [STEP 1] Starting company verification process");
-  console.log("📥 [REQUEST] Raw request body:", JSON.stringify(req.body, null, 2));
+  const { name, url } = req.body;
+  if (!name || !url) return next(new CustomError(400, "Name and url is required"));
+  // console.log("🔎 [VALIDATION] Validating Step 1 data...");
+  // console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
+  const response = await verifyCompanyInformation(name, url);
+  // console.log("📊 [STEP 1 COMPLETE] Verification result:", JSON.stringify(response, null, 2));
+  // Store the verification result
+  console.log("💾 [STORAGE] Storing Step 1 verification result...");
+  // const storedVerification = await storage.createCompanyVerification({
+  //   originalCompanyName: response.originalCompanyName,
+  //   verifiedCompanyName: response.originalCompanyName, // Keep original for now
+  //   originalUrl: response.originalUrl,
+  //   verifiedUrl: response.originalUrl, // Keep original for now
+  //   isCompanyNameVerified: response.verificationStatus === "verified",
+  //   isUrlVerified: response.verificationStatus === "verified",
+  //   wasCompanyNameUpdated: false, // No updates in verification mode
+  //   wasUrlFound: !!response.originalUrl,
+  // });
+  // console.log("✅ [STORAGE] Step 1 verification stored with ID:", storedVerification.id);
+  res.status(200).json(response);
+});
 
+// company lookup
+// ==========================================
+const lookupCompany = asyncHandler(async (req, res, next) => {
+  const { _id: userId } = req.user;
+  console.log("\n🔍 [STEP 2] Starting company lookup process");
+  const { name, url } = req.body;
   try {
-    // Validate request body (only require companyName and websiteUrl for Step 1)
-    console.log("🔎 [VALIDATION] Validating Step 1 data...");
-    const validatedData = verifyCompanySchema.parse(req.body);
-    console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(validatedData, null, 2));
+    if (!name || !url) return next(new CustomError(400, "Name and url is required"));
+    console.log("🔎 [VALIDATION] Validating Step 2 data...");
+    console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
+    // Execute company lookup
+    const lookupResult = await executeCompanyLookup(name, url, userId);
 
-    const response = await verifyCompanyInformation(validatedData);
-    console.log("📊 [STEP 1 COMPLETE] Verification result:", JSON.stringify(response, null, 2));
+    console.log(`📊 [STEP2-SUMMARY] Company: ${name || ""}`);
+    console.log(`📊 [STEP2-SUMMARY] Collection Rate: ${lookupResult.collectionRate}%`);
+    console.log(`📊 [STEP2-SUMMARY] Processing Time: ${lookupResult.processingTime}ms`);
+    console.log(`📊 [STEP2-SUMMARY] API Calls: ${lookupResult.apiCallsUsed}`);
+    console.log(`📊 [STEP2-SUMMARY] Status: ${lookupResult.status.toUpperCase()}`);
 
-    // Store the verification result
-    console.log("💾 [STORAGE] Storing Step 1 verification result...");
-    const storedVerification = await storage.createCompanyVerification({
-      originalCompanyName: response.originalCompanyName,
-      verifiedCompanyName: response.originalCompanyName, // Keep original for now
-      originalUrl: response.originalUrl,
-      verifiedUrl: response.originalUrl, // Keep original for now
-      isCompanyNameVerified: response.verificationStatus === "verified",
-      isUrlVerified: response.verificationStatus === "verified",
-      wasCompanyNameUpdated: false, // No updates in verification mode
-      wasUrlFound: !!response.originalUrl,
+    res.json({
+      lookupData: lookupResult.collectedData,
+      collectionRate: lookupResult.collectionRate,
+      lookupStatus: lookupResult.status,
+      message: `Collected ${lookupResult.collectionRate}% of company information`,
     });
-    console.log("✅ [STORAGE] Step 1 verification stored with ID:", storedVerification.id);
-
-    res.json(response);
   } catch (error) {
-    console.error("❌ [ERROR] Step 1 verification failed:", error);
-    res.status(400).json({
-      error: error instanceof Error ? error.message : "Failed to verify company information",
+    console.error("❌ [ERROR] Step 2 lookup failed:", error);
+
+    // Provide more detailed error information
+    let errorMessage = "Failed to lookup company information";
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+
+      // Check for specific error types and provide appropriate responses
+      if (errorMessage.includes("connection") || errorMessage.includes("database") || errorMessage.includes("pool")) {
+        errorMessage = "Database connection error. Please try again in a moment.";
+        statusCode = 503; // Service Unavailable
+      } else if (errorMessage.includes("API") || errorMessage.includes("fetch") || errorMessage.includes("network")) {
+        errorMessage = "External API error. Please try again later.";
+        statusCode = 502; // Bad Gateway
+      } else if (errorMessage.includes("timeout") || errorMessage.includes("ETIMEDOUT")) {
+        errorMessage = "Request timed out. Please try again.";
+        statusCode = 408; // Request Timeout
+      } else if (errorMessage.includes("validation") || errorMessage.includes("parse")) {
+        errorMessage = "Invalid request data. Please check your input.";
+        statusCode = 400; // Bad Request
+      }
+
+      // Log detailed error for debugging
+      console.error("❌ [ERROR-STACK]:", error.stack);
+    }
+
+    res.status(statusCode).json({
+      error: errorMessage,
+      type: "lookup_error",
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -186,8 +237,9 @@ export {
   updateSearchStrategy,
   deleteSearchStrategy,
   getSingleSearchStrategy,
-  verifyCompany,
   createPrompt,
   updatePrompt,
   getMyAllPrompts,
+  verifyCompany,
+  lookupCompany,
 };

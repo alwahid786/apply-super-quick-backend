@@ -25,6 +25,7 @@ import {
   deleteSearchStrategy,
   getAllSearchStrategies,
   getMyAllPrompts,
+  lookupCompany,
   updatePrompt,
   updateSearchStrategy,
   verifyCompany,
@@ -79,5 +80,6 @@ app.get("/get-my-prompts", isAuthenticated, getMyAllPrompts);
 // company verification
 
 app.post("/verify-company", isAuthenticated, verifyCompany);
+app.post("/lookup-company", isAuthenticated, lookupCompany);
 
 export default app;
