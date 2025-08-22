@@ -167,7 +167,7 @@ const verifyCompany = asyncHandler(async (req, res, next) => {
   //   wasUrlFound: !!response.originalUrl,
   // });
   // console.log("✅ [STORAGE] Step 1 verification stored with ID:", storedVerification.id);
-  res.status(200).json(response);
+  res.status(200).json({ success: true, data: response });
 });
 
 // company lookup
@@ -189,11 +189,14 @@ const lookupCompany = asyncHandler(async (req, res, next) => {
     console.log(`📊 [STEP2-SUMMARY] API Calls: ${lookupResult.apiCallsUsed}`);
     console.log(`📊 [STEP2-SUMMARY] Status: ${lookupResult.status.toUpperCase()}`);
 
-    res.json({
-      lookupData: lookupResult.collectedData,
-      collectionRate: lookupResult.collectionRate,
-      lookupStatus: lookupResult.status,
-      message: `Collected ${lookupResult.collectionRate}% of company information`,
+    res.status(200).json({
+      success: true,
+      data: {
+        lookupData: lookupResult.collectedData,
+        collectionRate: lookupResult.collectionRate,
+        lookupStatus: lookupResult.status,
+        message: `Collected ${lookupResult.collectionRate}% of company information`,
+      },
     });
   } catch (error) {
     console.error("❌ [ERROR] Step 2 lookup failed:", error);
@@ -225,9 +228,13 @@ const lookupCompany = asyncHandler(async (req, res, next) => {
     }
 
     res.status(statusCode).json({
-      error: errorMessage,
-      type: "lookup_error",
-      timestamp: new Date().toISOString(),
+      success: false,
+      message: errorMessage,
+      data: {
+        error: errorMessage,
+        type: "lookup_error",
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 });

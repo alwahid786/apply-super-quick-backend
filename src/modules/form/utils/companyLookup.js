@@ -35,13 +35,13 @@ export async function executeCompanyLookup(companyName, websiteUrl, userId) {
       // Build company identification components based on selections
       const identificationComponents = [];
 
-      if (companyIdentification?.includes("Simple company name")) {
+      if (companyIdentification?.includes("simple_company_name")) {
         identificationComponents.push(normalizedName?.coreNormalized);
       }
-      if (companyIdentification.includes("Legal company name")) {
+      if (companyIdentification.includes("legal_company_name")) {
         identificationComponents.push(normalizedName?.fullNormalized);
       }
-      if (companyIdentification.includes("Website URL") && domain) {
+      if (companyIdentification.includes("website_url") && domain) {
         identificationComponents.push(domain);
       }
 
@@ -367,11 +367,11 @@ ${websiteContentWithURLAttributions}`;
       fileContent += `TOTAL FILE SIZE: ${fileContent.length} characters\n`;
       fileContent += "=".repeat(80) + "\n";
 
-      // Write to file
-      const fs = await import("fs");
-      const path = await import("path");
-      const filepath = path.join(process.cwd(), filename);
-      fs.writeFileSync(filepath, fileContent, "utf8");
+      // // Write to file
+      // const fs = await import("fs");
+      // const path = await import("path");
+      // const filepath = path.join(process.cwd(), filename);
+      // fs.writeFileSync(filepath, fileContent, "utf8");
 
       console.log(`💾 [FILE-SAVED] Search evidence saved to: ${filename}`);
       console.log(`💾 [FILE-SAVED] File size: ${fileContent.length} characters`);
@@ -469,7 +469,7 @@ async function scrapeCompanyWebsite(websiteUrl) {
   // Browser simulation configurations for reliable access
   const requestConfigs = [
     {
-      timeout: 30000,
+      timeout: 50000,
       maxRedirects: 10,
       headers: {
         "User-Agent":
@@ -477,7 +477,7 @@ async function scrapeCompanyWebsite(websiteUrl) {
       },
     },
     {
-      timeout: 35000,
+      timeout: 50000,
       maxRedirects: 15,
       headers: {
         "User-Agent":
