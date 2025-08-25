@@ -31,7 +31,23 @@ import {
   verifyCompany,
 } from "../controllers/searchStrategies.controller.js";
 
-const { create_form, read_form, delete_form, submit_form } = webPermissions;
+const {
+  create_form,
+  read_form,
+  delete_form,
+  submit_form,
+  lookup_company,
+  update_form,
+  create_strategy,
+  update_strategy,
+  delete_strategy,
+  read_strategy,
+  create_prompt,
+  update_prompt,
+  read_prompt,
+  delete_prompt,
+  id_mission,
+} = webPermissions;
 
 const app = express.Router();
 
@@ -41,18 +57,17 @@ app.get("/my", isAuthenticated, isAuthorized(read_form), getMyallForms);
 app
   .route("/single/:formId")
   .delete(isAuthenticated, isAuthorized(delete_form), deleteSingleForm)
-  .get(isAuthenticated, getSingleForm);
+  .get(isAuthenticated, isAuthorized(read_form), getSingleForm);
 
-app.post("/submit", isAuthenticated, submitForm);
-app.post("/submit-article", isAuthenticated, singleUpload, submitFormArticleFile);
-app.post("/company-details", isAuthenticated, getCompanyDetailsByUrl);
+app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
+app.post("/submit-article", isAuthenticated, singleUpload, isAuthorized(submit_form), submitFormArticleFile);
+// app.post("/company-details", isAuthenticated, isAuthorized(lookup_company), getCompanyDetailsByUrl);
 // for getting and updating beneficial owners info
 app.get("/beneficial-owners", getBeneficialOwnersInfo);
 app.put("/beneficial-owners", addBeneficialOwnersInfo);
 
 // fields related routes
-app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(create_form), updateAddDeleteMultipleFields);
-
+app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(update_form), updateAddDeleteMultipleFields);
 app.post("/create-field", isAuthenticated, addNewFormField);
 app
   .route("/fields/:fieldId")
@@ -61,25 +76,25 @@ app
   .get(isAuthenticated, isAuthorized(read_form), getSingleFormFields);
 
 // other form related ai things
-app.post("/formate-display-text", isAuthenticated, isAuthorized(create_form), formateTextInMarkDown);
+app.post("/formate-display-text", isAuthenticated, formateTextInMarkDown);
 
 // routes for search strategies
 // ============================
-app.get("/search-strategy/all", isAuthenticated, getAllSearchStrategies);
-app.post("/search-strategy/create", isAuthenticated, createSearchStrategy);
+app.get("/search-strategy/all", isAuthenticated, isAuthorized(read_strategy), getAllSearchStrategies);
+app.post("/search-strategy/create", isAuthenticated, isAuthorized(create_strategy), createSearchStrategy);
 app
   .route("/search-strategy/single/:SearchStrategyId")
-  .get(isAuthenticated, createSearchStrategy)
-  .put(isAuthenticated, updateSearchStrategy)
-  .delete(isAuthenticated, deleteSearchStrategy);
+  .get(isAuthenticated, isAuthorized(read_strategy), createSearchStrategy)
+  .put(isAuthenticated, isAuthorized(update_strategy), updateSearchStrategy)
+  .delete(isAuthenticated, isAuthorized(delete_strategy), deleteSearchStrategy);
 
-app.post("/create-prompt", isAuthenticated, createPrompt);
-app.put("/prompt/single/update", isAuthenticated, updatePrompt);
-app.get("/get-my-prompts", isAuthenticated, getMyAllPrompts);
+app.post("/create-prompt", isAuthenticated, isAuthorized(create_prompt), createPrompt);
+app.put("/prompt/single/update", isAuthenticated, isAuthorized(update_prompt), updatePrompt);
+app.get("/get-my-prompts", isAuthenticated, isAuthorized(read_prompt), getMyAllPrompts);
 
 // company verification
 
-app.post("/verify-company", isAuthenticated, verifyCompany);
-app.post("/lookup-company", isAuthenticated, lookupCompany);
+app.post("/verify-company", isAuthenticated, isAuthorized(lookupCompany), verifyCompany);
+app.post("/lookup-company", isAuthenticated, isAuthorized(lookup_company), lookupCompany);
 
 export default app;

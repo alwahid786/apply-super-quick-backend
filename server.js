@@ -4,6 +4,7 @@ import { connectDB } from "./src/configs/connectDb.js";
 import { configureCloudinary } from "./src/global/utils/cloudinary.js";
 import http from "http";
 import { setupSocket } from "./src/global/utils/socketIo.js";
+import { addAllNewPermissionsInDb, addPermissionsInRoles } from "./src/configs/permissions.js";
 
 const port = getEnv("PORT");
 const server = http.createServer(app);
@@ -13,6 +14,8 @@ setupSocket(server);
 (async () => {
   await configureCloudinary();
   await connectDB(getEnv("MONGODB_URL"));
+  await addAllNewPermissionsInDb();
+  await addPermissionsInRoles();
   server.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
