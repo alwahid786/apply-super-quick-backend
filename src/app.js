@@ -1,17 +1,15 @@
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import express from "express";
+import morgan from "morgan";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import AuthRoutes from "./modules/auth/routes/auth.route.js";
-import RoleRoutes from "./modules/role/routes/role.route.js";
-import UserRoutes from "./modules/user/routes/user.route.js";
+import BrandingRoutes from "./modules/branding/routes/branding.route.js";
 import FormRoutes from "./modules/form/routes/form.route.js";
 import IdMissionRoutes from "./modules/idMission/routes/idMission.route.js";
-import BrandingRoutes from "./modules/branding/routes/branding.route.js";
-import cors from "cors";
-import { getEnv } from "./configs/config.js";
 import { markEmailVerified } from "./modules/idMission/utils/verification.js";
-import morgan from "morgan";
-import { IDmissionSessionGenerator } from "idmission-auth-client";
+import RoleRoutes from "./modules/role/routes/role.route.js";
+import UserRoutes from "./modules/user/routes/user.route.js";
 
 const app = express();
 
