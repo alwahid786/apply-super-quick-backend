@@ -20,9 +20,11 @@ import {
 } from "../controllers/form.controller.js";
 import { singleUpload } from "../../../middlewares/multer.js";
 import {
+  createDefaultStrategies,
   createPrompt,
   createSearchStrategy,
   deleteSearchStrategy,
+  findNaicAndMcc,
   getAllSearchStrategies,
   getMyAllPrompts,
   lookupCompany,
@@ -82,6 +84,7 @@ app.post("/formate-display-text", isAuthenticated, formateTextInMarkDown);
 // ============================
 app.get("/search-strategy/all", isAuthenticated, isAuthorized(read_strategy), getAllSearchStrategies);
 app.post("/search-strategy/create", isAuthenticated, isAuthorized(create_strategy), createSearchStrategy);
+app.post("/search-strategy/create-default", isAuthenticated, isAuthorized(create_strategy), createDefaultStrategies);
 app
   .route("/search-strategy/single/:SearchStrategyId")
   .get(isAuthenticated, isAuthorized(read_strategy), createSearchStrategy)
@@ -96,5 +99,6 @@ app.get("/get-my-prompts", isAuthenticated, isAuthorized(read_prompt), getMyAllP
 
 app.post("/verify-company", isAuthenticated, isAuthorized(lookupCompany), verifyCompany);
 app.post("/lookup-company", isAuthenticated, isAuthorized(lookup_company), lookupCompany);
+app.post("/find-naics-to-mcc", isAuthenticated, isAuthorized(lookup_company), findNaicAndMcc);
 
 export default app;

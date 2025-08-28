@@ -5,6 +5,9 @@ import SearchStrategy from "../schemas/searchStrategies.model.js";
 import Prompt from "../schemas/prompts.model.js";
 import { verifyCompanyInformation } from "../utils/companyVerification.js";
 import { executeCompanyLookup } from "../utils/companyLookup.js";
+import { strategiesData } from "../utils/searchStrategiesData.js";
+import { naicsToMcc } from "../../../../public/NAICStoMCC.js";
+import { openai } from "../../../configs/constants.js";
 
 // get all search strategies
 // ==========================================
@@ -46,6 +49,19 @@ const createSearchStrategy = asyncHandler(async (req, res, next) => {
 
   const newSearchStrategy = await SearchStrategy.create({ ...dataForAdd, userId: user._id });
   return res.status(201).json({ success: true, data: newSearchStrategy });
+});
+// create default strategies
+// ========================
+const createDefaultStrategies = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const existing = await SearchStrategy.find({ owner: user._id });
+  if (existing.length)
+    return next(new CustomError(400, "Default strategies cannot be created when you have strategies"));
+  let defaultStrategies = strategiesData.map((data) => ({ ...data, owner: user?._id }));
+  let newDefaultStrategies = await SearchStrategy.insertMany(defaultStrategies);
+  return res
+    .status(201)
+    .json({ success: true, data: newDefaultStrategies, message: "Default strategies created successfully" });
 });
 // update an existing search strategy
 // ==========================================
@@ -238,9 +254,56 @@ const lookupCompany = asyncHandler(async (req, res, next) => {
     });
   }
 });
+
+// find naic and mcc using open ai
+// ==========================================
+const findNaicAndMcc = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  const { description } = req.body;
+  if (!description) return next(new CustomError(400, "Description is required"));
+  const context = `
+You are a classifier. I have a mapping of NAICS codes to MCC codes.
+Here are some examples (NAICS, MCC):
+${naicsToMcc
+  .map(
+    (item) =>
+      `${item?.["NAICS Code"]},${item?.["NAICS Description"]} => ${item?.["MCC Code"]},${item?.["MCC Description"]}`
+  )
+  .join("\n")}
+
+Task:
+Given this business description: "${description}",
+1. Pick 4 NAICS code that best matches it.
+2. One of the 4 NAICS codes should be the best match and 3 other which also matches.
+3. If an MCC exists for that NAICS, return it as well.
+4. Respond strictly in JSON like:
+5. Not any extra word or text in the response other than the JSON.
+example formate: {
+'bestMatch':{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
+otherMatches:[
+{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
+{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
+{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" }
+]
+}
+If MCC is missing, use null for "mcc".
+    `;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "system", content: context }],
+    response_format: { type: "json_object" },
+    temperature: 0,
+  });
+
+  const response = completion.choices[0].message.content;
+  res.status(200).json({ success: true, data: JSON.parse(response) });
+});
+
 export {
   getAllSearchStrategies,
   createSearchStrategy,
+  createDefaultStrategies,
   updateSearchStrategy,
   deleteSearchStrategy,
   getSingleSearchStrategy,
@@ -249,4 +312,5 @@ export {
   getMyAllPrompts,
   verifyCompany,
   lookupCompany,
+  findNaicAndMcc,
 };

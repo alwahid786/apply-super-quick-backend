@@ -293,16 +293,22 @@ const formateTextInMarkDown = asyncHandler(async (req, res, next) => {
   const { text, instructions } = req.body;
   if (!text) return next(new CustomError(400, "Please Provide Text"));
   if (!instructions) return next(new CustomError(400, "Please Provide Instructions"));
-  const systemPrompt = `You are a text formatting assistant. Format the provided text according to the user's instructions and return only the formatted HTML result.
-IMPORTANT:
-- Return ONLY the formatted HTML, no explanations or code
-- Use proper HTML structure with tables, lists, or divs as appropriate
-- Make links clickable with proper <a href> tags
-- Use clean, professional styling with borders and proper spacing
-- If you can't format as requested, return the original text
-User instructions: ${instructions}
-Text to format: ${text}`;
+  const systemPrompt = `
+You are a text formatting assistant.
+Your task: Format the provided text according to the user's instructions and return ONLY the raw formatted HTML.
 
+STRICT RULES:
+- Output must be valid HTML only.
+- DO NOT include markdown fences like \`\`\`html or \`\`\`.
+- DO NOT include explanations, commentary, or any extra text.
+- DO NOT prepend or append anything — just return the HTML.
+- Always use proper HTML tags (<div>, <table>, <ul>, <li>, <a>, etc.) with clean and professional inline styling.
+- If the instructions cannot be followed, return the original text wrapped minimally in <div> tags.
+
+User instructions: ${instructions}
+Text to format: ${text}
+Return only raw HTML below:
+`;
   const result = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],
