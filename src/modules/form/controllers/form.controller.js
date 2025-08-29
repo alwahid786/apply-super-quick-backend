@@ -292,8 +292,9 @@ const deleteSingleFormField = asyncHandler(async (req, res, next) => {
 const formateTextInMarkDown = asyncHandler(async (req, res, next) => {
   const { text, instructions } = req.body;
   if (!text) return next(new CustomError(400, "Please Provide Text"));
-  if (!instructions) return next(new CustomError(400, "Please Provide Instructions"));
-  const systemPrompt = `
+  let systemPrompt = "";
+  if (instructions) {
+    systemPrompt = `
 You are a text formatting assistant.
 Your task: Format the provided text according to the user's instructions and return ONLY the raw formatted HTML.
 
@@ -309,6 +310,27 @@ User instructions: ${instructions}
 Text to format: ${text}
 Return only raw HTML below:
 `;
+  } else {
+    systemPrompt = `
+You are an AI assistant.
+
+Your task: Read the user's question and provide the most accurate and complete answer possible, formatted strictly as raw HTML.
+
+STRICT RULES:
+- Your answer must directly answer the user question with accuracy and completeness.
+- Output must be valid, well-structured HTML only.
+- DO NOT include markdown fences (no \`\`\`html or \`\`\`).
+- DO NOT include explanations, notes, or commentary outside the HTML.
+- DO NOT prepend or append anything — return only the HTML content.
+- Use semantic HTML tags (<div>, <p>, <table>, <ul>, <li>, <a>, <h1>-<h6>) as appropriate.
+- Ensure clean, professional formatting with proper spacing and inline styles when needed.
+- If the question cannot be answered, return the text "No valid answer found." wrapped in a <div> tag.
+
+User question: ${text}
+
+Return only the raw HTML answer below:
+`;
+  }
   const result = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],

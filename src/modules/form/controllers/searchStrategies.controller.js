@@ -171,7 +171,7 @@ const verifyCompany = asyncHandler(async (req, res, next) => {
   const response = await verifyCompanyInformation(name, url);
   // console.log("📊 [STEP 1 COMPLETE] Verification result:", JSON.stringify(response, null, 2));
   // Store the verification result
-  console.log("💾 [STORAGE] Storing Step 1 verification result...");
+  // console.log("💾 [STORAGE] Storing Step 1 verification result...");
   // const storedVerification = await storage.createCompanyVerification({
   //   originalCompanyName: response.originalCompanyName,
   //   verifiedCompanyName: response.originalCompanyName, // Keep original for now
@@ -190,20 +190,20 @@ const verifyCompany = asyncHandler(async (req, res, next) => {
 // ==========================================
 const lookupCompany = asyncHandler(async (req, res, next) => {
   const { _id: userId } = req.user;
-  console.log("\n🔍 [STEP 2] Starting company lookup process");
+  // console.log("\n🔍 [STEP 2] Starting company lookup process");
   const { name, url } = req.body;
   try {
     if (!name || !url) return next(new CustomError(400, "Name and url is required"));
-    console.log("🔎 [VALIDATION] Validating Step 2 data...");
-    console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
+    // console.log("🔎 [VALIDATION] Validating Step 2 data...");
+    // console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
     // Execute company lookup
     const lookupResult = await executeCompanyLookup(name, url, userId);
 
-    console.log(`📊 [STEP2-SUMMARY] Company: ${name || ""}`);
-    console.log(`📊 [STEP2-SUMMARY] Collection Rate: ${lookupResult.collectionRate}%`);
-    console.log(`📊 [STEP2-SUMMARY] Processing Time: ${lookupResult.processingTime}ms`);
-    console.log(`📊 [STEP2-SUMMARY] API Calls: ${lookupResult.apiCallsUsed}`);
-    console.log(`📊 [STEP2-SUMMARY] Status: ${lookupResult.status.toUpperCase()}`);
+    // console.log(`📊 [STEP2-SUMMARY] Company: ${name || ""}`);
+    // console.log(`📊 [STEP2-SUMMARY] Collection Rate: ${lookupResult.collectionRate}%`);
+    // console.log(`📊 [STEP2-SUMMARY] Processing Time: ${lookupResult.processingTime}ms`);
+    // console.log(`📊 [STEP2-SUMMARY] API Calls: ${lookupResult.apiCallsUsed}`);
+    // console.log(`📊 [STEP2-SUMMARY] Status: ${lookupResult.status.toUpperCase()}`);
 
     res.status(200).json({
       success: true,

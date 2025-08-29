@@ -94,11 +94,10 @@ app
 app.post("/create-prompt", isAuthenticated, isAuthorized(create_prompt), createPrompt);
 app.put("/prompt/single/update", isAuthenticated, isAuthorized(update_prompt), updatePrompt);
 app.get("/get-my-prompts", isAuthenticated, isAuthorized(read_prompt), getMyAllPrompts);
-
 // company verification
 
-app.post("/verify-company", isAuthenticated, isAuthorized(lookupCompany), verifyCompany);
+app.post("/verify-company", isAuthenticated, isAuthorized(lookup_company), verifyCompany);
 app.post("/lookup-company", isAuthenticated, isAuthorized(lookup_company), lookupCompany);
-app.post("/find-naics-to-mcc", isAuthenticated, isAuthorized(lookup_company), findNaicAndMcc);
+app.post("/find-naics-to-mcc", isAuthenticated, isAuthorized(submit_form), findNaicAndMcc);
 
 export default app;
