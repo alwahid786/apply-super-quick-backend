@@ -27,11 +27,19 @@ import {
   findNaicAndMcc,
   getAllSearchStrategies,
   getMyAllPrompts,
+  getSingleSearchStrategy,
   lookupCompany,
   updatePrompt,
   updateSearchStrategy,
   verifyCompany,
 } from "../controllers/searchStrategies.controller.js";
+import {
+  getFormStrategy,
+  createFormStrategy,
+  deleteFormStrategy,
+  getAllFormStrategies,
+  updateFormStrategy,
+} from "../controllers/formStrategies.controller.js";
 
 const {
   create_form,
@@ -69,6 +77,8 @@ app.get("/beneficial-owners", getBeneficialOwnersInfo);
 app.put("/beneficial-owners", addBeneficialOwnersInfo);
 
 // fields related routes
+// ============================
+
 app.post("/update-delete-create-fields", isAuthenticated, isAuthorized(update_form), updateAddDeleteMultipleFields);
 app.post("/create-field", isAuthenticated, addNewFormField);
 app
@@ -78,6 +88,7 @@ app
   .get(isAuthenticated, isAuthorized(read_form), getSingleFormFields);
 
 // other form related ai things
+// ============================
 app.post("/formate-display-text", isAuthenticated, formateTextInMarkDown);
 
 // routes for search strategies
@@ -87,14 +98,28 @@ app.post("/search-strategy/create", isAuthenticated, isAuthorized(create_strateg
 app.post("/search-strategy/create-default", isAuthenticated, isAuthorized(create_strategy), createDefaultStrategies);
 app
   .route("/search-strategy/single/:SearchStrategyId")
-  .get(isAuthenticated, isAuthorized(read_strategy), createSearchStrategy)
+  .get(isAuthenticated, isAuthorized(read_strategy), getSingleSearchStrategy)
   .put(isAuthenticated, isAuthorized(update_strategy), updateSearchStrategy)
   .delete(isAuthenticated, isAuthorized(delete_strategy), deleteSearchStrategy);
 
+// routes for search strategies
+// ============================
+app.get("/form-strategy/all", isAuthenticated, isAuthorized(read_strategy), getAllFormStrategies);
+app.post("/form-strategy/create", isAuthenticated, isAuthorized(create_strategy), createFormStrategy);
+// app.post("/form-strategy/create-default", isAuthenticated, isAuthorized(create_strategy), createDefaultStrategies);
+app
+  .route("/form-strategy/single/:formStrategyId")
+  .get(isAuthenticated, isAuthorized(read_strategy), getFormStrategy)
+  .put(isAuthenticated, isAuthorized(update_strategy), updateFormStrategy)
+  .delete(isAuthenticated, isAuthorized(delete_strategy), deleteFormStrategy);
+
+// routes for extraction prompts
+// ============================
 app.post("/create-prompt", isAuthenticated, isAuthorized(create_prompt), createPrompt);
 app.put("/prompt/single/update", isAuthenticated, isAuthorized(update_prompt), updatePrompt);
 app.get("/get-my-prompts", isAuthenticated, isAuthorized(read_prompt), getMyAllPrompts);
 // company verification
+// ============================
 
 app.post("/verify-company", isAuthenticated, isAuthorized(lookup_company), verifyCompany);
 app.post("/lookup-company", isAuthenticated, isAuthorized(lookup_company), lookupCompany);
