@@ -166,6 +166,9 @@ const getMyAllPrompts = asyncHandler(async (req, res, next) => {
 const verifyCompany = asyncHandler(async (req, res, next) => {
   const { name, url } = req.body;
   if (!name || !url) return next(new CustomError(400, "Name and url is required"));
+  if (url.startsWith("http://")) return next(new CustomError(400, "Please Provide https url"));
+  if (!url.startsWith("https://")) url = `https://${url}`;
+
   // console.log("🔎 [VALIDATION] Validating Step 1 data...");
   // console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
   const response = await verifyCompanyInformation(name, url);
@@ -191,13 +194,17 @@ const verifyCompany = asyncHandler(async (req, res, next) => {
 const lookupCompany = asyncHandler(async (req, res, next) => {
   const { _id: userId } = req.user;
   // console.log("\n🔍 [STEP 2] Starting company lookup process");
-  const { name, url } = req.body;
+  const { name, url, formId } = req.body;
+  if (url.startsWith("http://")) return next(new CustomError(400, "Please Provide https url"));
+  if (!url.startsWith("https://")) url = `https://${url}`;
+
   try {
     if (!name || !url) return next(new CustomError(400, "Name and url is required"));
+    if (!formId) return next(new CustomError(400, "Form id is required"));
     // console.log("🔎 [VALIDATION] Validating Step 2 data...");
     // console.log("✅ [VALIDATION] Data validated successfully:", JSON.stringify(req.body, null, 2));
     // Execute company lookup
-    const lookupResult = await executeCompanyLookup(name, url, userId);
+    const lookupResult = await executeCompanyLookup(name, url, userId, formId);
 
     // console.log(`📊 [STEP2-SUMMARY] Company: ${name || ""}`);
     // console.log(`📊 [STEP2-SUMMARY] Collection Rate: ${lookupResult.collectionRate}%`);

@@ -3,17 +3,18 @@ import { getEnv } from "../../../configs/config.js";
 import Prompt from "../schemas/prompts.model.js";
 import SearchStrategy from "../schemas/searchStrategies.model.js";
 import { normalizeCompanyName } from "./companyVerification.js";
+import FormStrategy from "../schemas/formStrategies.model.js";
 
-export async function executeCompanyLookup(companyName, websiteUrl, userId) {
+export async function executeCompanyLookup(companyName, websiteUrl, userId, formId) {
   const startTime = Date.now();
   const normalizedName = normalizeCompanyName(companyName);
   const domain = websiteUrl ? new URL(websiteUrl).hostname.replace("www.", "") : "";
-
   console.log(`🔍 [STEP2-LOOKUP] Starting comprehensive data collection for: ${companyName}`);
   console.log(`🎯 [STEP2-LOOKUP] Process: Google searches + multi-page website scraping → AI extraction`);
-
   // Load dynamic search strategies from database
-  const searchStrategies = await SearchStrategy.find({ owner: userId });
+  const formStrategies = await FormStrategy.findOne({ owner: userId, form: formId });
+  const searchStrategiesIds = formStrategies?.searchStrategies?.map((id) => id);
+  const searchStrategies = await SearchStrategy.find({ _id: { $in: searchStrategiesIds } });
   const searches = {};
 
   console.log(`📋 [STEP2-DATABASE] Loaded ${searchStrategies?.length} configurable search strategies from database`);

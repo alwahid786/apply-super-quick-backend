@@ -16,10 +16,12 @@ const getAllFormStrategies = asyncHandler(async (req, res, next) => {
 // ==========================================
 const createFormStrategy = asyncHandler(async (req, res, next) => {
   const user = req.user;
-  const { searchStrategies, form, isActive } = req.body;
-  if (!searchStrategies || !form) return next(new CustomError(400, "All fields are required"));
-  const formStrategy = await FormStrategy.create({ owner: user?._id, searchStrategies, form, isActive });
-  return res.status(201).json({ success: true, data: formStrategy });
+  const { name, searchStrategies, form, isActive } = req.body;
+  const isExist = await FormStrategy.findOne({ owner: user._id, form });
+  if (isExist) return next(new CustomError(400, "Form strategy already exist for this form"));
+  if (!searchStrategies || !form || !name) return next(new CustomError(400, "All fields are required"));
+  const formStrategy = await FormStrategy.create({ owner: user?._id, name, searchStrategies, form, isActive });
+  return res.status(201).json({ success: true, message: "Form strategy created successfully" });
 });
 
 // get single form strategy
@@ -57,7 +59,7 @@ const updateFormStrategy = asyncHandler(async (req, res, next) => {
     { new: true }
   );
   if (!updatedStrategy) return next(new CustomError(404, "Form strategy not found"));
-  return res.status(200).json({ success: true, data: updatedStrategy });
+  return res.status(200).json({ success: true, message: "Form strategy updated successfully" });
 });
 
 export { createFormStrategy, deleteFormStrategy, getAllFormStrategies, getFormStrategy, updateFormStrategy };
