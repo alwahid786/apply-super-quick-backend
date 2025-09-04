@@ -99,7 +99,7 @@ const submitForm = asyncHandler(async (req, res, next) => {
   }
   const isFormExist = await Form.findById(formId);
   if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
-  const form = await SubmitForm.create({ formId, submitData: formData, user: userId });
+  const form = await SubmitForm.create({ form: formId, submitData: formData, user: userId });
   if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
   const mailSendPromises = [];
   beneficialOwnersEmails.forEach((email) => {
@@ -119,9 +119,21 @@ const saveFormInProgress = asyncHandler(async (req, res, next) => {
   // get emails which are also owner we need to send him a mail
   const isFormExist = await Form.findById(formId);
   if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
-  const form = await SaveForm.create({ formId, savedData: formData, user: userId });
+  const form = await SaveForm.findOneAndUpdate(
+    { form: formId, user: userId },
+    { savedData: formData },
+    { upsert: true, new: true }
+  );
   if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
   return res.status(200).json({ success: true, message: "Form Saved Successfully" });
+});
+
+const getSavedForm = asyncHandler(async (req, res, next) => {
+  const userId = req?.user?._id;
+  const formId = req?.params?.formId;
+  const form = await SaveForm.findOne({ user: userId, form: formId });
+  if (!form) return next(new CustomError(400, "Form Not Found"));
+  return res.status(200).json({ success: true, data: form });
 });
 
 const submitFormArticleFile = asyncHandler(async (req, res, next) => {
@@ -412,6 +424,7 @@ export {
   submitForm,
   saveFormInProgress,
   submitFormArticleFile,
+  getSavedForm,
   // fields related controllers
   updateAddDeleteMultipleFields,
   getSingleFormFields,

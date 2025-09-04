@@ -11,6 +11,7 @@ import {
   formateTextInMarkDown,
   getBeneficialOwnersInfo,
   getMyallForms,
+  getSavedForm,
   getSingleForm,
   getSingleFormFields,
   saveFormInProgress,
@@ -68,7 +69,8 @@ app
   .get(isAuthenticated, isAuthorized(read_form), getSingleForm);
 
 app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
-app.post("/save-form", isAuthenticated, isAuthorized(submit_form), saveFormInProgress);
+app.post("/save-in-draft", isAuthenticated, isAuthorized(submit_form), saveFormInProgress);
+app.get("/get-saved/:formId", isAuthenticated, isAuthorized(submit_form), getSavedForm);
 app.post("/submit-article", isAuthenticated, singleUpload, isAuthorized(submit_form), submitFormArticleFile);
 // app.post("/company-details", isAuthenticated, isAuthorized(lookup_company), getCompanyDetailsByUrl);
 // for getting and updating beneficial owners info
