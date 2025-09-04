@@ -1,6 +1,7 @@
 import express from "express";
 import { webPermissions } from "../../../configs/permissions.js";
 import { isAuthenticated, isAuthorized } from "../../../middlewares/authMiddleware.js";
+import { singleUpload } from "../../../middlewares/multer.js";
 import {
   addBeneficialOwnersInfo,
   addNewFormField,
@@ -9,16 +10,22 @@ import {
   deleteSingleFormField,
   formateTextInMarkDown,
   getBeneficialOwnersInfo,
-  getCompanyDetailsByUrl,
   getMyallForms,
   getSingleForm,
   getSingleFormFields,
+  saveFormInProgress,
   submitForm,
   submitFormArticleFile,
   updateAddDeleteMultipleFields,
   updateSingleFormField,
 } from "../controllers/form.controller.js";
-import { singleUpload } from "../../../middlewares/multer.js";
+import {
+  createFormStrategy,
+  deleteFormStrategy,
+  getAllFormStrategies,
+  getFormStrategy,
+  updateFormStrategy,
+} from "../controllers/formStrategies.controller.js";
 import {
   createDefaultStrategies,
   createPrompt,
@@ -33,13 +40,6 @@ import {
   updateSearchStrategy,
   verifyCompany,
 } from "../controllers/searchStrategies.controller.js";
-import {
-  getFormStrategy,
-  createFormStrategy,
-  deleteFormStrategy,
-  getAllFormStrategies,
-  updateFormStrategy,
-} from "../controllers/formStrategies.controller.js";
 
 const {
   create_form,
@@ -55,8 +55,6 @@ const {
   create_prompt,
   update_prompt,
   read_prompt,
-  delete_prompt,
-  id_mission,
 } = webPermissions;
 
 const app = express.Router();
@@ -70,6 +68,7 @@ app
   .get(isAuthenticated, isAuthorized(read_form), getSingleForm);
 
 app.post("/submit", isAuthenticated, isAuthorized(submit_form), submitForm);
+app.post("/save-form", isAuthenticated, isAuthorized(submit_form), saveFormInProgress);
 app.post("/submit-article", isAuthenticated, singleUpload, isAuthorized(submit_form), submitFormArticleFile);
 // app.post("/company-details", isAuthenticated, isAuthorized(lookup_company), getCompanyDetailsByUrl);
 // for getting and updating beneficial owners info
