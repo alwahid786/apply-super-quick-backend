@@ -1,4 +1,5 @@
 import { asyncHandler } from "../../../global/utils/asyncHandler.js";
+import { uploadOnCloudinary } from "../../../global/utils/cloudinary.js";
 import { CustomError } from "../../../global/utils/customError.js";
 import { Auth } from "../../auth/schemas/auth.model.js";
 import Form from "../../form/schemas/form.model.js";
@@ -23,7 +24,6 @@ const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
 // --------------
 const createBranding = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
-
   if (!userId) return next(new CustomError(400, "User not found"));
   let files = req.files;
   let { logos, colorPalette, name, url, colors, fontFamily, selectedLogo } = req.body;
@@ -31,22 +31,37 @@ const createBranding = asyncHandler(async (req, res, next) => {
   logos = JSON.parse(logos, null, 2);
   colorPalette = JSON.parse(colorPalette, null, 2);
 
-  console.log("logos", logos);
-
   if (!name || !url || !fontFamily || !Array.isArray(colorPalette) || !colorPalette.length)
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
+    return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
   const isExist = await Branding.findOne({ owner: userId, name });
   if (isExist) return next(new CustomError(400, "Branding already exists"));
 
+  const uploadClouds = await Promise.all(
+    files.map(async (file) => {
+      const result = await uploadOnCloudinary(file, "branding");
+      return result;
+    })
+  );
+
+  let urlWithCloudinaryImages = [
+    ...logos,
+    ...uploadClouds.map((cloudinaryImage) => ({
+      url: cloudinaryImage.secure_url,
+      type: "img",
+      publicId: cloudinaryImage.public_id,
+    })),
+  ];
+
   const branding = await Branding.create({
     owner: userId,
-    logos: logos,
+    logos: urlWithCloudinaryImages,
     name,
     url,
     colorPalette: colorPalette,
@@ -74,9 +89,9 @@ const getSingleBranding = asyncHandler(async (req, res, next) => {
 const updateSingleBranding = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   if (!userId) return next(new CustomError(400, "User not found"));
+  const files = req.files;
   const { brandingId } = req.params;
-  let { logos, name, url, colorPalette, colors, fontFamily, selectedLogo, files } = req.body;
-  console.log("files", files);
+  let { logos, name, url, colorPalette, colors, fontFamily, selectedLogo } = req.body;
   colors = JSON.parse(colors, null, 2);
   logos = JSON.parse(logos, null, 2);
   colorPalette = JSON.parse(colorPalette, null, 2);
@@ -86,14 +101,31 @@ const updateSingleBranding = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
+    return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
   const branding = await Branding.findOne({ _id: brandingId, owner: userId });
   if (!branding) return next(new CustomError(404, "Branding not found"));
 
-  branding.logos = logos;
+  const uploadClouds = await Promise.all(
+    files.map(async (file) => {
+      const result = await uploadOnCloudinary(file, "branding");
+      return result;
+    })
+  );
+
+  let urlWithCloudinaryImages = [
+    ...logos,
+    ...uploadClouds.map((cloudinaryImage) => ({
+      url: cloudinaryImage.secure_url,
+      type: "img",
+      publicId: cloudinaryImage.public_id,
+    })),
+  ];
+
+  branding.logos = urlWithCloudinaryImages;
   branding.name = name;
   branding.url = url;
   branding.colorPalette = colorPalette;
@@ -136,7 +168,11 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   if (!formId && !onHome == "yes") return next(new CustomError(400, "Form ID is required if onHome is not provided"));
   let message = "";
   if (formId) {
-    const updateForm = await Form.findOneAndUpdate({ _id: formId, owner: user._id }, { branding: brandingId }, { new: true });
+    const updateForm = await Form.findOneAndUpdate(
+      { _id: formId, owner: user._id },
+      { branding: brandingId },
+      { new: true }
+    );
     if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
     message = "Branding applied to form successfully";
   }
@@ -148,4 +184,12 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message });
 });
 
-export { extractThemeFromUrl, createBranding, getSingleBranding, updateSingleBranding, deleteSingleBranding, getAllBrandings, addBrandingInForm };
+export {
+  extractThemeFromUrl,
+  createBranding,
+  getSingleBranding,
+  updateSingleBranding,
+  deleteSingleBranding,
+  getAllBrandings,
+  addBrandingInForm,
+};

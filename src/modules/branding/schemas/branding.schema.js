@@ -6,7 +6,9 @@ const brandingSchema = new mongoose.Schema(
     name: { type: String, required: true },
     url: { type: String, required: true },
     logos: {
-      type: [{ url: { type: String, required: true }, type: { type: String, required: true } }],
+      type: [
+        { url: { type: String, required: true }, type: { type: String, required: true }, publicId: { type: String } },
+      ],
       default: [],
     },
     colorPalette: { type: [String], default: [] },
@@ -20,7 +22,7 @@ const brandingSchema = new mongoose.Schema(
       frame: { type: String, required: true },
     },
     fontFamily: { type: String, required: true },
-    selectedLogo: { type: String, default: '' }, // Add selectedLogo field
+    selectedLogo: { type: String, default: "" }, // Add selectedLogo field
   },
   { timestamps: true }
 );
