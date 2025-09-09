@@ -30,8 +30,9 @@ const createBranding = asyncHandler(async (req, res, next) => {
   colors = JSON.parse(colors, null, 2);
   logos = JSON.parse(logos, null, 2);
   colorPalette = JSON.parse(colorPalette, null, 2);
-  console.log("Req files", files);
+
   console.log("logos", logos);
+
   if (!name || !url || !fontFamily || !Array.isArray(colorPalette) || !colorPalette.length)
     return next(new CustomError(400, "Please provide all fields"));
 
