@@ -22,34 +22,34 @@ const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
 // create branding
 // --------------
 const createBranding = asyncHandler(async (req, res, next) => {
-  const user = req.user;
+  const userId = req.user?._id;
+  if (!userId) return next(new CustomError(400, "User not found"));
   console.log("req.body", req.body);
-  if (!user?._id) return next(new CustomError(400, "User Not Found"));
-  if (!req.body) return next(new CustomError(400, "Please Provide body"));
-  const { logos, colorPalette, name, url, colors, fontFamily } = req.body;
-  if (!name || !url || !fontFamily || !colorPalette.length)
-    return next(new CustomError(400, "Please Provide all fields"));
-  const { primary, secondary, accent, link, text, background, frame } = colors;
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
-    return next(new CustomError(400, "Please Provide all colors"));
-  if (!logos?.length) return next(new CustomError(400, "Please Provide at least one logo"));
+  const { logos, colorPalette, name, url, colors, fontFamily, selectedLogo } = req.body;
 
-  const isExist = await Branding.findOne({
-    owner: user?._id,
-    name,
-  });
-  if (isExist) return next(new CustomError(400, "Branding Already Exists"));
-  const newBranding = await Branding.create({
-    owner: user?._id,
-    logos,
-    name,
-    url,
-    colorPalette,
-    colors: { primary, secondary, accent, link, text, background, frame },
-    fontFamily,
-  });
-  if (!newBranding) return next(new CustomError(400, "Error While Creating Branding"));
-  return res.status(201).json({ success: true, message: "Branding Created Successfully" });
+  // if (!name || !url || !fontFamily || !Array.isArray(colorPalette) || !colorPalette.length)
+  //   return next(new CustomError(400, "Please provide all fields"));
+
+  // const { primary, secondary, accent, link, text, background, frame } = colors || {};
+  // if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
+
+  // if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
+
+  // const isExist = await Branding.findOne({ owner: userId, name });
+  // if (isExist) return next(new CustomError(400, "Branding already exists"));
+
+  // const branding = await Branding.create({
+  //   owner: userId,
+  //   logos,
+  //   name,
+  //   url,
+  //   colorPalette,
+  //   colors: { primary, secondary, accent, link, text, background, frame },
+  //   fontFamily,
+  //   selectedLogo: selectedLogo || logos[0]?.url || logos[0],
+  // });
+
+  return res.status(201).json({ success: true, message: "Branding created successfully" });
 });
 
 // get single branding
@@ -66,35 +66,33 @@ const getSingleBranding = asyncHandler(async (req, res, next) => {
 // update single branding
 // ----------------------
 const updateSingleBranding = asyncHandler(async (req, res, next) => {
-  const user = req.user;
-
-  if (!user?._id) return next(new CustomError(400, "User Not Found"));
-  const { logos, name, url, colorPalette, colors, fontFamily } = req.body;
+  const userId = req.user?._id;
+  if (!userId) return next(new CustomError(400, "User not found"));
   const { brandingId } = req.params;
+  const { logos, name, url, colorPalette, colors, fontFamily, selectedLogo } = req.body;
+
   if (!brandingId) return next(new CustomError(400, "Branding ID is required"));
-  if (!name || !url || !fontFamily || !colorPalette.length)
-    return next(new CustomError(400, "Please Provide all fields"));
-  const { primary, secondary, accent, link, text, background, frame } = colors;
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
-    return next(new CustomError(400, "Please Provide all colors"));
-  if (!logos?.length) return next(new CustomError(400, "Please Provide at least one logo"));
+  if (!name || !url || !fontFamily || !Array.isArray(colorPalette) || !colorPalette.length)
+    return next(new CustomError(400, "Please provide all fields"));
 
-  const isExist = await Branding.findOne({
-    _id: brandingId,
-    owner: user?._id,
-  });
+  const { primary, secondary, accent, link, text, background, frame } = colors || {};
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
 
-  if (!isExist) return next(new CustomError(400, "Branding Not Found"));
+  if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
-  isExist.logos = logos;
-  isExist.name = name;
-  isExist.url = url;
-  isExist.colorPalette = colorPalette;
-  isExist.colors = { primary, secondary, accent, link, text, background, frame };
-  isExist.fontFamily = fontFamily;
-  const updatedBranding = await isExist.save();
-  if (!updatedBranding) return next(new CustomError(400, "Error While Updating Branding"));
-  return res.status(200).json({ success: true, message: "Branding Updated Successfully" });
+  const branding = await Branding.findOne({ _id: brandingId, owner: userId });
+  if (!branding) return next(new CustomError(404, "Branding not found"));
+
+  branding.logos = logos;
+  branding.name = name;
+  branding.url = url;
+  branding.colorPalette = colorPalette;
+  branding.colors = { primary, secondary, accent, link, text, background, frame };
+  branding.fontFamily = fontFamily;
+  branding.selectedLogo = selectedLogo || logos[0]?.url || logos[0];
+
+  await branding.save();
+  return res.status(200).json({ success: true, message: "Branding updated successfully", data: branding });
 });
 
 // delete single branding
@@ -128,11 +126,7 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   if (!formId && !onHome == "yes") return next(new CustomError(400, "Form ID is required if onHome is not provided"));
   let message = "";
   if (formId) {
-    const updateForm = await Form.findOneAndUpdate(
-      { _id: formId, owner: user._id },
-      { branding: brandingId },
-      { new: true }
-    );
+    const updateForm = await Form.findOneAndUpdate({ _id: formId, owner: user._id }, { branding: brandingId }, { new: true });
     if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
     message = "Branding applied to form successfully";
   }
@@ -144,12 +138,4 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message });
 });
 
-export {
-  extractThemeFromUrl,
-  createBranding,
-  getSingleBranding,
-  updateSingleBranding,
-  deleteSingleBranding,
-  getAllBrandings,
-  addBrandingInForm,
-};
+export { extractThemeFromUrl, createBranding, getSingleBranding, updateSingleBranding, deleteSingleBranding, getAllBrandings, addBrandingInForm };

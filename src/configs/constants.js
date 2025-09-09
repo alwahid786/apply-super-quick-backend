@@ -12,14 +12,14 @@ const isDev = getEnv("NODE_ENV") == "development";
 export const accessTokenOptions = {
   httpOnly: true,
   sameSite: isDev ? "lax" : "none",
-  secure: isDev ? false : true,
+  secure: !isDev, // only secure if not dev
   maxAge: parseInt(getEnv("ACCESS_TOKEN_MAX_AGE")),
 };
 
 export const refreshTokenOptions = {
   httpOnly: true,
   sameSite: isDev ? "lax" : "none",
-  secure: isDev ? false : true,
+  secure: !isDev,
   maxAge: Number(getEnv("REFRESH_TOKEN_MAX_AGE")),
 };
 

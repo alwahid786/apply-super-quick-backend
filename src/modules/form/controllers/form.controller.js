@@ -16,6 +16,7 @@ import { sendMail } from "../../../global/utils/sendMail.js";
 import { Auth } from "../../auth/schemas/auth.model.js";
 import { Role } from "../../role/schemas/role.model.js";
 import { sendToken } from "../../../global/utils/sendToken.js";
+import { SaveForm } from "../schemas/savedForm.mode.js";
 
 let submitId = "";
 let myCloud = "";
@@ -87,7 +88,6 @@ const deleteSingleForm = asyncHandler(async (req, res, next) => {
 
 const submitForm = asyncHandler(async (req, res, next) => {
   const userId = req?.user?._id;
-  console.log(req.body);
   const { formId, formData } = req.body;
   if (!formId || !formData) return next(new CustomError(400, "Please Provide Form Id and Form Data"));
   // get emails which are also owner we need to send him a mail
@@ -99,7 +99,7 @@ const submitForm = asyncHandler(async (req, res, next) => {
   }
   const isFormExist = await Form.findById(formId);
   if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
-  const form = await SubmitForm.create({ formId, submitData: formData, user: userId });
+  const form = await SubmitForm.create({ form: formId, submitData: formData, user: userId });
   if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
   const mailSendPromises = [];
   beneficialOwnersEmails.forEach((email) => {
@@ -110,6 +110,30 @@ const submitForm = asyncHandler(async (req, res, next) => {
   });
   await Promise.all(mailSendPromises);
   return res.status(200).json({ success: true, message: "Form Submitted Successfully", data: form });
+});
+
+const saveFormInProgress = asyncHandler(async (req, res, next) => {
+  const userId = req?.user?._id;
+  const { formId, formData } = req.body;
+  if (!formId || !formData) return next(new CustomError(400, "Please Provide Form Id and Form Data"));
+  // get emails which are also owner we need to send him a mail
+  const isFormExist = await Form.findById(formId);
+  if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
+  const form = await SaveForm.findOneAndUpdate(
+    { form: formId, user: userId },
+    { savedData: formData },
+    { upsert: true, new: true }
+  );
+  if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
+  return res.status(200).json({ success: true, message: "Form Saved Successfully" });
+});
+
+const getSavedForm = asyncHandler(async (req, res, next) => {
+  const userId = req?.user?._id;
+  const formId = req?.params?.formId;
+  const form = await SaveForm.findOne({ user: userId, form: formId });
+  if (!form) return next(new CustomError(400, "Form Not Found"));
+  return res.status(200).json({ success: true, data: form });
 });
 
 const submitFormArticleFile = asyncHandler(async (req, res, next) => {
@@ -398,7 +422,9 @@ export {
   getMyallForms,
   getSingleForm,
   submitForm,
+  saveFormInProgress,
   submitFormArticleFile,
+  getSavedForm,
   // fields related controllers
   updateAddDeleteMultipleFields,
   getSingleFormFields,
