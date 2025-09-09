@@ -20,6 +20,7 @@ const brandingSchema = new mongoose.Schema(
       frame: { type: String, required: true },
     },
     fontFamily: { type: String, required: true },
+    selectedLogo: { type: String, default: '' }, // Add selectedLogo field
   },
   { timestamps: true }
 );
