@@ -1,10 +1,10 @@
 import puppeteer from "puppeteer";
 import getColors from "get-image-colors";
 import { openai } from "../../../configs/constants.js";
+import analyzeLogos from "./detectLogo.js";
 
 async function filterColorsByLogosWithAI(colors, logos) {
-  if (!Array.isArray(colors) || !Array.isArray(logos))
-    throw new Error("colors must be an array and logos must be an array of {url:string}");
+  if (!Array.isArray(colors) || !Array.isArray(logos)) throw new Error("colors must be an array and logos must be an array of {url:string}");
   // Define the function schema for filtering
   const functions = [
     {
@@ -107,7 +107,7 @@ export async function fetchBranding(url) {
       const selectors = ["img[alt*=logo i]", "img[src*=logo i]", "img[class*=logo i]", "img[id*=logo i]"];
       selectors.forEach((sel) => {
         document.querySelectorAll(sel).forEach((img) => {
-          if (img.src) items.push({ type: "img", url: img.src, width: img.naturalWidth, height: img.naturalHeight });
+          if (img.src) items.push({ type: "img", url: img.src, width: img.naturalWidth, height: img.naturalHeight, invert: false });
         });
       });
       return items;
@@ -151,6 +151,17 @@ export async function fetchBranding(url) {
     logos = logos.filter((i) => !seen.has(i.url) && seen.add(i.url));
     logos.sort((a, b) => (b.width || 0) * (b.height || 0) - (a.width || 0) * (a.height || 0));
     logos = logos.slice(0, 5);
+
+    const analyzed = await Promise.all(
+      logos.map(async (logo) => {
+        try {
+          const result = await analyzeLogos(logo.url);
+          return { ...logo, invert: result.invisible };
+        } catch (err) {
+          return { ...logo, error: err.message };
+        }
+      })
+    );
 
     // 4) Site color extraction (up to 5)
     const rawColors = await page.evaluate(() => {

@@ -7,7 +7,12 @@ const brandingSchema = new mongoose.Schema(
     url: { type: String, required: true },
     logos: {
       type: [
-        { url: { type: String, required: true }, type: { type: String, required: true }, publicId: { type: String } },
+        {
+          url: { type: String, required: true },
+          type: { type: String, required: true },
+          publicId: { type: String },
+          invert: { type: Boolean, default: false },
+        },
       ],
       default: [],
     },
