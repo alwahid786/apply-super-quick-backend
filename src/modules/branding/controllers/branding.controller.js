@@ -4,6 +4,7 @@ import { CustomError } from "../../../global/utils/customError.js";
 import { Auth } from "../../auth/schemas/auth.model.js";
 import Form from "../../form/schemas/form.model.js";
 import { Branding } from "../schemas/branding.schema.js";
+import analyzeLogos from "../utils/detectLogo.js";
 import { fetchBranding } from "../utils/extractTheme.js";
 
 // extract theme
@@ -18,9 +19,7 @@ const extractThemeFromUrl = asyncHandler(async (req, res, next) => {
   if (!url) return next(new CustomError(400, "Please Provide url"));
   const data = await fetchBranding(url);
   return res.status(200).json({ success: true, data: data });
-});
-
-// create branding
+}); // create branding
 // --------------
 const createBranding = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -35,8 +34,7 @@ const createBranding = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
-    return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
@@ -59,6 +57,21 @@ const createBranding = asyncHandler(async (req, res, next) => {
     })),
   ];
 
+  urlWithCloudinaryImages = await Promise.all(
+    urlWithCloudinaryImages.map(async (logo) => {
+      try {
+        const isLight = await analyzeLogos([logo.url]);
+        console.log("[analyzeLogo] url:", logo.url, "=> avgLight:", isLight);
+
+        return { ...logo, invert: !!isLight.invisible };
+      } catch (err) {
+        console.log("[analyzeLogo] url:", logo.url, "=> error:", err.message);
+
+        return { ...logo, invert: false };
+      }
+    })
+  );
+
   const branding = await Branding.create({
     owner: userId,
     logos: urlWithCloudinaryImages,
@@ -70,18 +83,7 @@ const createBranding = asyncHandler(async (req, res, next) => {
     selectedLogo: selectedLogo || logos[0]?.url || logos[0],
   });
 
-  return res.status(201).json({ success: true, message: "Branding created successfully" });
-});
-
-// get single branding
-// ------------------
-const getSingleBranding = asyncHandler(async (req, res, next) => {
-  const user = req.user;
-  if (!user?._id) return next(new CustomError(400, "User Not Found"));
-  const { brandingId } = req.params;
-  const branding = await Branding.findOne({ _id: brandingId });
-  if (!branding) return next(new CustomError(400, "Branding Not Found"));
-  return res.status(200).json({ success: true, data: branding });
+  return res.status(201).json({ success: true, message: "Branding created successfully", data: branding });
 });
 
 // update single branding
@@ -101,8 +103,7 @@ const updateSingleBranding = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
-    return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
@@ -125,6 +126,21 @@ const updateSingleBranding = asyncHandler(async (req, res, next) => {
     })),
   ];
 
+  urlWithCloudinaryImages = await Promise.all(
+    urlWithCloudinaryImages.map(async (logo) => {
+      try {
+        const isLight = await analyzeLogos([logo.url]);
+        console.log("[analyzeLogo] url:", logo.url, "=> avgLight:", isLight);
+
+        return { ...logo, invert: !!isLight.invisible };
+      } catch (err) {
+        console.log("[analyzeLogo] url:", logo.url, "=> error:", err.message);
+
+        return { ...logo, invert: false };
+      }
+    })
+  );
+
   branding.logos = urlWithCloudinaryImages;
   branding.name = name;
   branding.url = url;
@@ -135,6 +151,17 @@ const updateSingleBranding = asyncHandler(async (req, res, next) => {
 
   await branding.save();
   return res.status(200).json({ success: true, message: "Branding updated successfully", data: branding });
+});
+
+// get single branding
+// ------------------
+const getSingleBranding = asyncHandler(async (req, res, next) => {
+  const user = req.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const { brandingId } = req.params;
+  const branding = await Branding.findOne({ _id: brandingId });
+  if (!branding) return next(new CustomError(400, "Branding Not Found"));
+  return res.status(200).json({ success: true, data: branding });
 });
 
 // delete single branding
@@ -168,11 +195,7 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   if (!formId && !onHome == "yes") return next(new CustomError(400, "Form ID is required if onHome is not provided"));
   let message = "";
   if (formId) {
-    const updateForm = await Form.findOneAndUpdate(
-      { _id: formId, owner: user._id },
-      { branding: brandingId },
-      { new: true }
-    );
+    const updateForm = await Form.findOneAndUpdate({ _id: formId, owner: user._id }, { branding: brandingId }, { new: true });
     if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
     message = "Branding applied to form successfully";
   }
@@ -184,12 +207,4 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message });
 });
 
-export {
-  extractThemeFromUrl,
-  createBranding,
-  getSingleBranding,
-  updateSingleBranding,
-  deleteSingleBranding,
-  getAllBrandings,
-  addBrandingInForm,
-};
+export { extractThemeFromUrl, createBranding, getSingleBranding, updateSingleBranding, deleteSingleBranding, getAllBrandings, addBrandingInForm };
