@@ -6,6 +6,7 @@ import Form from "../../form/schemas/form.model.js";
 import { Branding } from "../schemas/branding.schema.js";
 import analyzeLogos from "../utils/detectLogo.js";
 import { fetchBranding } from "../utils/extractTheme.js";
+import { getMainColor } from "../utils/findLogoColor.js";
 
 // extract theme
 // -------------
@@ -34,7 +35,8 @@ const createBranding = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
+    return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
@@ -103,7 +105,8 @@ const updateSingleBranding = asyncHandler(async (req, res, next) => {
     return next(new CustomError(400, "Please provide all fields"));
 
   const { primary, secondary, accent, link, text, background, frame } = colors || {};
-  if (!primary || !secondary || !accent || !link || !text || !background || !frame) return next(new CustomError(400, "Please provide all colors"));
+  if (!primary || !secondary || !accent || !link || !text || !background || !frame)
+    return next(new CustomError(400, "Please provide all colors"));
 
   if (!Array.isArray(logos) || !logos.length) return next(new CustomError(400, "Please provide at least one logo"));
 
@@ -195,7 +198,11 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   if (!formId && !onHome == "yes") return next(new CustomError(400, "Form ID is required if onHome is not provided"));
   let message = "";
   if (formId) {
-    const updateForm = await Form.findOneAndUpdate({ _id: formId, owner: user._id }, { branding: brandingId }, { new: true });
+    const updateForm = await Form.findOneAndUpdate(
+      { _id: formId, owner: user._id },
+      { branding: brandingId },
+      { new: true }
+    );
     if (!updateForm) return next(new CustomError(400, "Form Not Found or User Not Authorized"));
     message = "Branding applied to form successfully";
   }
@@ -207,4 +214,28 @@ const addBrandingInForm = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, message });
 });
 
-export { extractThemeFromUrl, createBranding, getSingleBranding, updateSingleBranding, deleteSingleBranding, getAllBrandings, addBrandingInForm };
+// get color from single logos
+// --------------------------
+const extractColorsFromFiles = asyncHandler(async (req, res, next) => {
+  const files = req.files;
+
+  if (!files?.length) return next(new CustomError(400, "Please provide at least one logo"));
+
+  const promises = files.map(async (file) => {
+    return await getMainColor(file);
+  });
+
+  const colors = await Promise.all(promises);
+  return res.status(200).json({ success: true, message: "Colors extracted successfully", data: colors });
+});
+
+export {
+  extractThemeFromUrl,
+  createBranding,
+  getSingleBranding,
+  updateSingleBranding,
+  deleteSingleBranding,
+  getAllBrandings,
+  addBrandingInForm,
+  extractColorsFromFiles,
+};

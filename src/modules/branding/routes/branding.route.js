@@ -9,6 +9,7 @@ import {
   deleteSingleBranding,
   getAllBrandings,
   addBrandingInForm,
+  extractColorsFromFiles,
 } from "../controllers/branding.controller.js";
 import { multipleUpload } from "../../../middlewares/multer.js";
 
@@ -28,5 +29,13 @@ router
 router.put("/apply/branding", isAuthenticated, isAuthorized(update_branding), addBrandingInForm);
 
 router.get("/all", isAuthenticated, isAuthorized(read_branding), getAllBrandings);
+
+router.post(
+  "/extract-colors-from-logo",
+  isAuthenticated,
+  isAuthorized(create_branding),
+  multipleUpload,
+  extractColorsFromFiles
+);
 
 export default router;
