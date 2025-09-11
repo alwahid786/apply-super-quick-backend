@@ -7,6 +7,7 @@ const formSchema = new mongoose.Schema(
     branding: { type: mongoose.Schema.Types.ObjectId, ref: "Branding", default: null },
     brandingType: { type: String, default: "default" },
     name: { type: String, required: true },
+    redirectUrl: { type: String },
     description: { type: String },
     branding: { type: mongoose.Schema.Types.ObjectId, ref: "Branding", default: null },
     logo: { type: imageSchema, default: null },

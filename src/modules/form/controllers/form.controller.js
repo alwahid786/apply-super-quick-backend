@@ -41,6 +41,7 @@ const createNewForm = asyncHandler(async (req, res, next) => {
     owner: user?._id,
     name: formData?.name,
     description: formData?.description,
+    redirectUrl: formData?.redirectUrl,
     sections: sectionIds,
   });
   if (!form) return next(new CustomError(400, "Error While Creating Form"));

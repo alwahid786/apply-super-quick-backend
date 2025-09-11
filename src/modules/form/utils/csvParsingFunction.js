@@ -21,6 +21,7 @@ function convertCsvToActualFormData(csvInput) {
   });
   let formName = "";
   let formDescription = "";
+  let formRedirectUrl = "";
   const sections = [];
   let currentSection = null;
   for (const row of rows) {
@@ -28,6 +29,7 @@ function convertCsvToActualFormData(csvInput) {
     // 1) Forward-fill form-level properties
     if (row?.form_name) formName = row.form_name;
     if (row?.form_description) formDescription = row.form_description;
+    if (row?.form_redirect_url) formRedirectUrl = row.form_redirect_url;
     // 2) Detect and start a new section
     const title = row?.section_title;
     if (!title) continue; // skip rows without a section title
@@ -117,6 +119,7 @@ function convertCsvToActualFormData(csvInput) {
   return {
     name: formName,
     description: formDescription,
+    redirectUrl: formRedirectUrl,
     sections,
   };
 }
