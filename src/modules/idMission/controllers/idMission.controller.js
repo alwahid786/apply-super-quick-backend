@@ -89,7 +89,14 @@ const verifyEmailAndLogin = asyncHandler(async (req, res, next) => {
   if (!user?._id) {
     const role = await Role.findOneAndUpdate({ name: "guest" }, { name: "guest" }, { upsert: true, new: true });
     if (!role) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
-    user = await Auth.create({ firstName: "Guest", lastName: "User", role: role?._id, password: "guest", email });
+    user = await Auth.create({
+      firstName: "Guest",
+      middleName: "",
+      lastName: "User",
+      role: role?._id,
+      password: "guest",
+      email,
+    });
   }
   if (!user) return next(new CustomError(400, "Error While Creating otp, Please Try Again Later"));
   await sendToken(res, next, user, 200, "Email Verified Successfully");

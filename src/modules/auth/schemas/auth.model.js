@@ -5,6 +5,7 @@ import { imageSchema } from "../../../global/schemas/global.model.js";
 const authSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true },
+    middleName: { type: String, default: "" },
     lastName: { type: String, required: true },
     address: { type: String },
     state: { type: String },

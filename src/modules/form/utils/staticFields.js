@@ -1,13 +1,5 @@
 const company_info_fields = [
   {
-    label: "Website URL",
-    type: "text",
-    name: "website_url",
-    required: true,
-    placeholder: "https://example.com",
-    aiHelp: false,
-  },
-  {
     label: "Legal Company Name",
     type: "text",
     name: "legal_company_name",
@@ -16,56 +8,31 @@ const company_info_fields = [
     aiHelp: false,
   },
   {
-    label: "DBA Name",
+    label: "Website URL",
     type: "text",
-    name: "dba_name",
+    name: "website_url",
     required: true,
-    placeholder: "e.g. Example Corp.",
-    aiHelp: true,
-    aiPrompt: "What is the DBA name of the company?",
-    aiResponse: `# ✅ Understanding DBA (Doing Business As)
-
----
-
-## 📌 What is a DBA?
-
-> A **DBA (Doing Business As)** is a registered **trade name** that a company uses to operate under a different name than its official legal name.  
-> It allows businesses to present a unique brand or identity while remaining the same legal entity.
-
----
-
-## 📝 Definition
-
-- A **DBA** allows a business to use a name other than its registered legal name.
-- It is commonly used for branding, marketing, or business expansion.
-- A **DBA does NOT create a separate legal entity**.
-
----
-
-## 📋 Example
-
-- **Legal Name:** XYZ Technologies Pvt. Ltd.
-- **DBA Name:** XYZ Web Solutions
-`,
-  },
-  {
-    label: "Business Description",
-    type: "text",
-    name: "business_description",
-    required: true,
-    placeholder: "e.g. We deliver sustainable packaging...",
-    aiHelp: true,
-    aiPrompt: "What is the business description?",
-    aiResponse: "The business description provides an overview of the company's operations.",
-  },
-  {
-    label: "Business Classification",
-    type: "text",
-    name: "business_classification",
-    required: true,
-    placeholder: "e.g. We are a B Corporation...",
+    placeholder: "https://example.com",
     aiHelp: false,
   },
+  {
+    label: "Compnay HQ Address",
+    type: "text",
+    name: "company_hq_address",
+    required: true,
+    placeholder: "e.g. 123 Main St., New York, NY 10001",
+    aiHelp: false,
+  },
+
+  {
+    label: "Company Phone",
+    type: "text",
+    name: "company_phone",
+    required: true,
+    placeholder: "e.g. +1 123-456-7890",
+    aiHelp: false,
+  },
+
   {
     label: "Legal Entity Type",
     type: "radio",
@@ -91,68 +58,54 @@ const company_info_fields = [
     required: true,
     aiHelp: false,
   },
+
   {
-    label: "SSN (Social Security Number)",
-    type: "text",
-    name: "ssn",
+    label: "Company Founded Date",
+    type: "date",
+    name: "company_founded_date",
     required: true,
-    placeholder: "e.g. 123-45-6789",
-    aiHelp: false,
-    isMasked: true,
+    placeholder: "e.g. 2000-01-01 (YYYY-MM-DD)",
+    aiHelp: true,
+    aiPrompt: "",
+    aiResponse: ``,
+  },
+
+  {
+    label: "Parent Company",
+    type: "text",
+    name: "parent_company",
+    required: true,
+    placeholder: "e.g. Parent Company",
+    aiHelp: true,
+    aiPrompt: "",
+    aiResponse: ``,
+  },
+
+  {
+    label: "DBA Name",
+    type: "text",
+    name: "dba_name",
+    required: true,
+    placeholder: "e.g. Example Corp.",
+    aiHelp: true,
+    aiPrompt: "What is the DBA name of the company?",
+    aiResponse: ``,
   },
   {
-    label: "Street Address",
+    label: "Business Description",
     type: "text",
-    name: "street_address",
+    name: "business_description",
     required: true,
-    placeholder: "e.g. 123 Main St.",
-    aiHelp: false,
-  },
-  {
-    label: "City",
-    type: "text",
-    name: "city",
-    required: true,
-    placeholder: "e.g. New York",
-    aiHelp: false,
-  },
-  {
-    label: "State",
-    type: "text",
-    name: "state",
-    required: true,
-    placeholder: "e.g. NY",
-    aiHelp: false,
-  },
-  {
-    label: "Country",
-    type: "text",
-    name: "country",
-    required: true,
-    placeholder: "e.g. United States",
-    aiHelp: false,
-  },
-  {
-    label: "Zip Code",
-    type: "text",
-    name: "zip_code",
-    required: true,
-    placeholder: "e.g. 10001",
-    aiHelp: false,
-  },
-  {
-    label: "Company Phone",
-    type: "text",
-    name: "company_phone",
-    required: true,
-    placeholder: "e.g. +1 123-456-7890",
-    aiHelp: false,
+    placeholder: "e.g. We deliver sustainable packaging...",
+    aiHelp: true,
+    aiPrompt: "What is the business description?",
+    aiResponse: "The business description provides an overview of the company's operations.",
   },
 ];
 const beneficial_fields = [
   {
     label:
-      "Are you the primary operator (or one of the primary operators) and/or an owner with 25% or more of the company? Primary operator includes roles like president, CEO, general partner, managing member, sole proprietor, etc.",
+      "Are you a primary operator (or one of the primary operators) and/or an owner of 25% or more of the company? Primary operator includes roles like president, CEO, CFO, president, general partner, managing member, sole proprietor, etc.",
     type: "radio",
     options: [
       { label: "Yes", value: "yes" },
@@ -164,7 +117,7 @@ const beneficial_fields = [
   },
 
   {
-    label: "Are there additional owners who own 25% or more of the company?",
+    label: "Are there other primary operators and/or owners who own 25% or more of the company?",
     type: "radio",
     options: [
       { label: "Yes", value: "yes" },

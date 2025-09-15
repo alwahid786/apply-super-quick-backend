@@ -318,21 +318,25 @@ const formateTextInMarkDown = asyncHandler(async (req, res, next) => {
   const { text, instructions } = req.body;
   if (!text) return next(new CustomError(400, "Please Provide Text"));
   let systemPrompt = "";
+
   if (instructions) {
     systemPrompt = `
-You are a text formatting assistant.
-Your task: Format the provided text according to the user's instructions and return ONLY the raw formatted HTML.
+You are a strict text formatter.
+Your task: ONLY format the given text according to the user's instructions and return ONLY the raw formatted HTML.
 
 STRICT RULES:
-- Output must be valid HTML only.
-- DO NOT include markdown fences like \`\`\`html or \`\`\`.
+- DO NOT add, remove, or invent any new content. Only reformat what is provided.
+- Output must be valid HTML only..
+- DO NOT wrap output in Markdown fences (no \`\`\`html, no \`\`\`).
 - DO NOT include explanations, commentary, or any extra text.
-- DO NOT prepend or append anything — just return the HTML.
-- Always use proper HTML tags (<div>, <table>, <ul>, <li>, <a>, etc.) with clean and professional inline styling.
-- If the instructions cannot be followed, return the original text wrapped minimally in <div> tags.
+- DO NOT prepend or append anything — return only the HTML.
+- Always use proper semantic HTML tags (<div>, <p>, <span>, <table>, <ul>, <li>, etc.) with minimal clean inline styling if required.
+- Preserve all original text content exactly — only change structure/formatting.
+- If formatting cannot be applied, return the original text minimally wrapped in <div>.
 
 User instructions: ${instructions}
 Text to format: ${text}
+
 Return only raw HTML below:
 `;
   } else {
@@ -348,21 +352,24 @@ STRICT RULES:
 - DO NOT include explanations, notes, or commentary outside the HTML.
 - DO NOT prepend or append anything — return only the HTML content.
 - Use semantic HTML tags (<div>, <p>, <table>, <ul>, <li>, <a>, <h1>-<h6>) as appropriate.
+- Bank names must always follow this format:
+  <div><strong>Bank Name:</strong> Example Bank</div>
 - Ensure clean, professional formatting with proper spacing and inline styles when needed.
-- If the question cannot be answered, return the text "No valid answer found." wrapped in a <div> tag.
 
 User question: ${text}
 
 Return only the raw HTML answer below:
 `;
   }
+
   const result = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],
-    temperature: 0.1,
   });
 
-  return res.status(200).json({ success: true, data: result.choices[0].message.content });
+  let output = result.choices[0].message.content.trim();
+  output = output.replace(/^```html\n?/, "").replace(/```$/, "");
+  return res.status(200).json({ success: true, data: output });
 });
 
 // for getting beneficial owners information
