@@ -54,7 +54,7 @@ const createNewForm = asyncHandler(async (req, res, next) => {
   // create fields
   const createdFields = await FormField.insertMany(fields);
   if (!createdFields?.length) return next(new CustomError(400, "Error While Creating Fields"));
-  return res.status(200).json({ success: true, message: "Form Created Successfully", data: form });
+  return res.status(200).json({ success: true, message: "Form Created Successfully" });
 });
 
 const getMyallForms = asyncHandler(async (req, res, next) => {

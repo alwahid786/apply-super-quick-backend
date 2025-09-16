@@ -41,6 +41,14 @@ const createFormSectionsFields = (formData, user) => {
           if (field?.displayText) singleField.displayText = field?.displayText;
           if (field?.ai_support) singleField.ai_support = field?.ai_support;
           if (field?.ai_formatting) singleField.ai_formatting = field?.ai_formatting;
+          if (field?.conditional_fields)
+            singleField.conditional_fields = field?.conditional_fields?.map((f) => ({
+              label: f.label,
+              type: f.type,
+              name: f.name,
+              required: f.required,
+            }));
+          // console.log("conditional fields", field.conditional_fields?.[0]);
           fields.push(singleField);
         });
       }

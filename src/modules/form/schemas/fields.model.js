@@ -21,6 +21,17 @@ export const formFieldSchema = new mongoose.Schema(
     defaultValue: { type: String },
     isMasked: { type: Boolean, default: false },
     // additional fields for AI support
+    conditional_fields: {
+      type: [
+        {
+          label: { type: String },
+          type: { type: String },
+          name: { type: String },
+          required: { type: Boolean, default: false },
+        },
+      ],
+      default: [],
+    },
     aiPrompt: { type: String },
     aiResponse: { type: String },
     isDisplayText: { type: Boolean, default: false },
