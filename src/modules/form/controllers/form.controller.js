@@ -165,6 +165,23 @@ const getCompanyDetailsByUrl = asyncHandler(async (req, res, next) => {
   const result = await extractCompanyInfo(url);
   return res.status(200).json({ success: true, data: result });
 });
+
+const updateFormSection = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const { sectionId } = req.params;
+  const { aiFormatting, displayText } = req.body;
+  if (!userId) return next(new CustomError(400, "User Not Found"));
+  if (!sectionId) return next(new CustomError(400, "Please Provide Section Id"));
+  if (!aiFormatting) return next(new CustomError(400, "Please Provide AI Formating"));
+  if (!displayText) return next(new CustomError(400, "Please Provide Display Text"));
+  const updatedSection = await FormSection.findOneAndUpdate(
+    { _id: sectionId, owner: userId },
+    { ai_formatting: aiFormatting, displayText },
+    { new: true }
+  );
+  if (!updatedSection) return next(new CustomError(400, "Error While Updating Section"));
+  return res.status(200).json({ success: true, message: "Section Updated Successfully" });
+});
 // fields controllers
 // =================
 
@@ -433,6 +450,7 @@ export {
   saveFormInProgress,
   submitFormArticleFile,
   getSavedForm,
+  updateFormSection,
   // fields related controllers
   updateAddDeleteMultipleFields,
   getSingleFormFields,

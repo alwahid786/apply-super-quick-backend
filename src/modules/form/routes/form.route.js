@@ -18,6 +18,7 @@ import {
   submitForm,
   submitFormArticleFile,
   updateAddDeleteMultipleFields,
+  updateFormSection,
   updateSingleFormField,
 } from "../controllers/form.controller.js";
 import {
@@ -76,6 +77,8 @@ app.post("/submit-article", isAuthenticated, singleUpload, isAuthorized(submit_f
 // for getting and updating beneficial owners info
 app.get("/beneficial-owners", getBeneficialOwnersInfo);
 app.put("/beneficial-owners", addBeneficialOwnersInfo);
+
+app.put("/update-form-section/:sectionId", isAuthenticated, isAuthorized(update_form), updateFormSection);
 
 // fields related routes
 // ============================

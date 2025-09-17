@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 const formSectionSchema = new mongoose.Schema(
   {
@@ -9,9 +9,9 @@ const formSectionSchema = new mongoose.Schema(
     owner: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
     title: { type: String, required: true },
     name: { type: String, required: true },
-    displayText: { type: String },
-    ai_support: { type: String },
-    ai_formatting: { type: String },
+    displayText: { type: String, default: "" },
+    ai_support: { type: String, default: "" },
+    ai_formatting: { type: String, default: "" },
     isBlock: { type: Boolean, default: false },
     fields: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormField" }],
     blocks: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormBlock" }],
