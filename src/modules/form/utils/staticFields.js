@@ -94,7 +94,7 @@ const company_info_fields = [
   {
     label: "Business Description",
     type: "text",
-    name: "business_description",
+    name: "companydescription",
     required: true,
     placeholder: "e.g. We deliver sustainable packaging...",
     aiHelp: false,

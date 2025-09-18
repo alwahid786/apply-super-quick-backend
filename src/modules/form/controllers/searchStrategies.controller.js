@@ -289,18 +289,18 @@ Given this business description: "${description}",
 4. Respond strictly in JSON like:
 5. Not any extra word or text in the response other than the JSON.
 example formate: {
-'bestMatch':{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
+'bestMatch':{ "naics": "number", naicsDescription: "string", "mcc": "number" , "mccDescription": "string" },
 otherMatches:[
-{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
-{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" },
-{ "naics": "xxxxxx", naicsDescription: "yyyyy", "mcc": "zzzz" , "mccDescription": "zzzzz" }
+{ "naics": "number", naicsDescription: "string", "mcc": "number" , "mccDescription": "string" },
+{ "naics": "number", naicsDescription: "string", "mcc": "number" , "mccDescription": "string" },
+{ "naics": "number", naicsDescription: "string", "mcc": "number" , "mccDescription": "string" }
 ]
 }
 If MCC is missing, use null for "mcc".
     `;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-4o",
     messages: [{ role: "system", content: context }],
     response_format: { type: "json_object" },
     temperature: 0,
