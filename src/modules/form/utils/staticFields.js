@@ -107,7 +107,7 @@ const beneficial_fields = [
     type: "radio",
     options: [
       { label: "Yes", value: "yes" },
-      { label: "NO", value: "no" },
+      { label: "No", value: "no" },
     ],
     name: "applicant_is_primary_operator_or_owner_with_more_then_25percentage",
     required: true,
@@ -119,7 +119,7 @@ const beneficial_fields = [
     type: "radio",
     options: [
       { label: "Yes", value: "yes" },
-      { label: "NO", value: "no" },
+      { label: "No", value: "no" },
     ],
     name: "additional_owners_own_25_percent_or_more",
     required: true,

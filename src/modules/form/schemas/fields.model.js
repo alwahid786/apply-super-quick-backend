@@ -37,6 +37,10 @@ export const formFieldSchema = new mongoose.Schema(
     isDisplayText: { type: Boolean, default: false },
     displayText: { type: String },
     ai_formatting: { type: String },
+    signature: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

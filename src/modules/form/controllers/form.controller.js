@@ -105,9 +105,7 @@ const submitForm = asyncHandler(async (req, res, next) => {
   const mailSendPromises = [];
   beneficialOwnersEmails.forEach((email) => {
     const link = `http://localhost:5173/singleForm/owner?email=${email}&submitId=${form?._id}&userId=${userId}`;
-    mailSendPromises.push(
-      sendMail(email, "Form Submitted Successfully", `click on this link to verify your details : ${link}`)
-    );
+    mailSendPromises.push(sendMail(email, "Form Submitted Successfully", `click on this link to verify your details : ${link}`));
   });
   await Promise.all(mailSendPromises);
   return res.status(200).json({ success: true, message: "Form Submitted Successfully", data: form });
@@ -120,11 +118,7 @@ const saveFormInProgress = asyncHandler(async (req, res, next) => {
   // get emails which are also owner we need to send him a mail
   const isFormExist = await Form.findById(formId);
   if (!isFormExist) return next(new CustomError(400, "Form Not Found"));
-  const form = await SaveForm.findOneAndUpdate(
-    { form: formId, user: userId },
-    { savedData: formData },
-    { upsert: true, new: true }
-  );
+  const form = await SaveForm.findOneAndUpdate({ form: formId, user: userId }, { savedData: formData }, { upsert: true, new: true });
   if (!form) return next(new CustomError(400, "Error While Creating Form Submission"));
   return res.status(200).json({ success: true, message: "Form Saved Successfully" });
 });
@@ -140,8 +134,28 @@ const getSavedForm = asyncHandler(async (req, res, next) => {
 const submitFormArticleFile = asyncHandler(async (req, res, next) => {
   try {
     const file = req.file;
-    console.log("filedata boyd", req.body);
-    const { submissionId, name } = req.body;
+    console.log("filedata body", req.body);
+    const { submissionId, name, isSignature } = req.body;
+    if (isSignature) {
+      if (!submissionId) throw new CustomError(400, "Please Provide Form Id and Form Data");
+      const isFormSaved = await SaveForm.findOne({ user: req.user?._id, form: submissionId });
+      if (!isFormSaved) throw new CustomError(400, "Form Not Found");
+
+      const uploadImage = await uploadOnCloudinary(file, "docs");
+      if (!uploadImage.public_id || !uploadImage.secure_url) throw new CustomError(400, "Error While Uploading File");
+
+      const updatedForm = await SaveForm.findOneAndUpdate(
+        { user: req.user?._id, form: submissionId },
+        {
+          $set: {
+            "savedData.idMission.signature": uploadImage.secure_url,
+          },
+        },
+        { new: true }
+      );
+      if (!updatedForm) throw new CustomError(400, "Error While Uploading File");
+      return res.status(200).json({ success: true, message: "File Uploaded Successfully" });
+    }
     if (!submissionId || !name) throw new CustomError(400, "Please Provide Form Id and Form Data");
     submitId = submissionId;
     const isFormExist = await SubmitForm.findById(submissionId);
@@ -393,8 +407,7 @@ Return only the raw HTML answer below:
 const getBeneficialOwnersInfo = asyncHandler(async (req, res, next) => {
   const { userId, submitId, email } = req.query;
   console.log(req.query);
-  if (!isValidObjectId(userId) || !isValidObjectId(submitId) || !email)
-    return next(new CustomError(400, "Invalidate data"));
+  if (!isValidObjectId(userId) || !isValidObjectId(submitId) || !email) return next(new CustomError(400, "Invalidate data"));
   const submittedForm = await SubmitForm.findOne({ _id: submitId, user: userId });
   if (!submittedForm) return next(new CustomError(400, "Form Not Found"));
   const beneficialOwners = submittedForm?.submitData?.beneficial_blk?.additional_owner;
@@ -417,8 +430,7 @@ const addBeneficialOwnersInfo = asyncHandler(async (req, res, next) => {
   const { userId, submitId } = req.query;
   if (!isValidObjectId(userId) || !isValidObjectId(submitId)) return next(new CustomError(400, "Invalid data"));
   const { name, email, ssn, percentage, isVerified, idMissionData } = req.body;
-  if (!name || !email || !ssn || percentage === undefined || !idMissionData)
-    return next(new CustomError(400, "Please fill all required fields"));
+  if (!name || !email || !ssn || percentage === undefined || !idMissionData) return next(new CustomError(400, "Please fill all required fields"));
   const submittedForm = await SubmitForm.findOne({ _id: submitId, user: userId });
   if (!submittedForm) return next(new CustomError(404, "Form Not Found"));
   const beneficialOwners = submittedForm?.submitData?.beneficial_blk?.additional_owner;

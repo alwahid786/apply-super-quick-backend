@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "dev:ngrok": "ngrok http --url=prompt-robin-immune.ngrok-free.app 5001",
+    "dev:ngrok-m": "ngrok http --url=untogaed-ungovernably-neal.ngrok-free.app 5001",
     "postinstall": "npx puppeteer@latest install"
   },
   "author": "Hamza Nafasat",
