@@ -133,6 +133,14 @@ const beneficial_fields = [
 ];
 const bank_account_info_fields = [
   {
+    label: "Bank Routing Number",
+    type: "text",
+    name: "bank_routing_number",
+    required: true,
+    placeholder: "e.g. 123456789",
+    aiHelp: false,
+  },
+  {
     label: "Bank Name",
     type: "text",
     name: "bank_name",
@@ -149,11 +157,11 @@ const bank_account_info_fields = [
     aiHelp: false,
   },
   {
-    label: "Bank Routing Number",
+    label: "Confirm Bank Account Number",
     type: "text",
-    name: "bank_routing_number",
+    name: "confirm_bank_account_number",
     required: true,
-    placeholder: "e.g. 123456789",
+    placeholder: "e.g. 1234567890",
     aiHelp: false,
   },
   {

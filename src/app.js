@@ -57,6 +57,25 @@ app.use("/api/user", UserRoutes);
 app.use("/api/form", FormRoutes);
 app.use("/api/id-mission", IdMissionRoutes);
 app.use("/api/branding", BrandingRoutes);
+app.get("/api/routing-lookup", async (req, res) => {
+  try {
+    const { searchTerm } = req.query;
+    if (!searchTerm) {
+      return res.status(400).json({ error: "searchTerm is required" });
+    }
+
+    const response = await fetch(`https://wise.com/gateway/routing-numbers/search?searchTerm=${searchTerm}`);
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: "Failed to fetch from Wise" });
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "Server error fetching bank lookup" });
+  }
+});
 
 // error handler
 app.use(errorHandler);
