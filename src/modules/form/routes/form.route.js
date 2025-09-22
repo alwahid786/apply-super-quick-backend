@@ -19,6 +19,7 @@ import {
   submitFormArticleFile,
   updateAddDeleteMultipleFields,
   updateFormSection,
+  updateSignature,
   updateSingleFormField,
 } from "../controllers/form.controller.js";
 import {
@@ -128,5 +129,9 @@ app.get("/get-my-prompts", isAuthenticated, isAuthorized(read_prompt), getMyAllP
 app.post("/verify-company", isAuthenticated, isAuthorized(lookup_company), verifyCompany);
 app.post("/lookup-company", isAuthenticated, isAuthorized(lookup_company), lookupCompany);
 app.post("/find-naics-to-mcc", isAuthenticated, isAuthorized(submit_form), findNaicAndMcc);
+
+// signature related routes
+// ============================
+app.post("/update-signature", isAuthenticated, isAuthorized(update_form), updateSignature);
 
 export default app;

@@ -135,7 +135,18 @@ const submitFormArticleFile = asyncHandler(async (req, res, next) => {
   try {
     const file = req.file;
     console.log("filedata body", req.body);
-    const { submissionId, name, isSignature } = req.body;
+    const { submissionId, name, isSignature, sectionId } = req.body;
+
+    if (isSignature && sectionId) {
+      const section = await FormSection.findById(sectionId);
+      if (!section) throw new CustomError(400, "Section Not Found");
+      const uploadImage = await uploadOnCloudinary(file, "docs");
+      if (!uploadImage.public_id || !uploadImage.secure_url) throw new CustomError(400, "Error While Uploading File");
+      const updatedSection = await FormSection.findOneAndUpdate({ _id: sectionId }, { $set: { signature: uploadImage.secure_url } }, { new: true });
+      if (!updatedSection) throw new CustomError(400, "Error While Updating Section");
+      return res.status(200).json({ success: true, message: "Section Updated Successfully" });
+    }
+
     if (isSignature) {
       if (!submissionId) throw new CustomError(400, "Please Provide Form Id and Form Data");
       const isFormSaved = await SaveForm.findOne({ user: req.user?._id, form: submissionId });
@@ -317,6 +328,18 @@ const updateSingleFormField = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ success: true, data: updatedField });
 });
 
+const updateSignature = asyncHandler(async (req, res, next) => {
+  const user = req?.user;
+  if (!user?._id) return next(new CustomError(400, "User Not Found"));
+  const { sectionId, isSignature } = req.body;
+  if (!sectionId) return next(new CustomError(400, "Please Provide Section Id"));
+  const section = await FormSection.findOne({ _id: sectionId, owner: user?._id });
+  if (!section) return next(new CustomError(400, "Section Not Found"));
+  const updatedSection = await FormSection.findByIdAndUpdate(section._id, { isSignature }, { new: true });
+  if (!updatedSection) return next(new CustomError(400, "Error While Updating Section"));
+  return res.status(200).json({ success: true, data: updatedSection });
+});
+
 const addNewFormField = asyncHandler(async (req, res, next) => {
   const user = req?.user;
   if (!user?._id) return next(new CustomError(400, "User Not Found"));
@@ -474,4 +497,5 @@ export {
   // for getting and updating beneficial owners info
   getBeneficialOwnersInfo,
   addBeneficialOwnersInfo,
+  updateSignature,
 };

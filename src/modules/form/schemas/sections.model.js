@@ -13,6 +13,8 @@ const formSectionSchema = new mongoose.Schema(
     ai_support: { type: String, default: "" },
     ai_formatting: { type: String, default: "" },
     isBlock: { type: Boolean, default: false },
+    isSignature: { type: Boolean, default: false },
+    signature: { type: String, default: "" },
     fields: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormField" }],
     blocks: [{ type: mongoose.Schema.Types.ObjectId, ref: "FormBlock" }],
   },

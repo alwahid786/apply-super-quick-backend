@@ -15,6 +15,7 @@ const createFormSectionsFields = (formData, user) => {
     if (section?.displayText) singleSection.displayText = section?.displayText;
     if (section?.ai_formatting) singleSection.ai_formatting = section?.ai_formatting;
     if (section?.ai_support) singleSection.ai_support = section?.ai_support;
+    if (section?.isSignature) singleSection.isSignature = section?.isSignature;
 
     const fieldsIds = [];
     if (Array.isArray(section?.fields) && section?.fields?.length) {
