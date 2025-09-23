@@ -132,6 +132,6 @@ app.post("/find-naics-to-mcc", isAuthenticated, isAuthorized(submit_form), findN
 
 // signature related routes
 // ============================
-app.post("/update-signature", isAuthenticated, isAuthorized(update_form), updateSignature);
+app.put("/update-signature", isAuthenticated, isAuthorized(update_form), updateSignature);
 
 export default app;
