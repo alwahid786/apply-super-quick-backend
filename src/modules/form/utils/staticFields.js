@@ -309,6 +309,13 @@ const articleOfIncorporation_fields = [
     required: true,
     aiHelp: false,
   },
+  {
+    label: "Upload Urls of Article of Incorporation",
+    type: "textarea",
+    name: "article_of_incorporation_urls",
+    required: false,
+    aiHelp: false,
+  },
 ];
 const applicantIsMainOwnerFields = [
   {

@@ -37,7 +37,7 @@ const getMyProfile = asyncHandler(async (req, res, next) => {
   const userId = req?.user?._id;
   if (!isValidObjectId(userId)) return next(new CustomError(400, "Invalid User Id"));
   const user = await Auth.findById(userId).populate("branding");
-  console.log("user", user);
+  // console.log("user", user);
   if (!user) return next(new CustomError(400, "User Not Found"));
   return res.status(200).json({ success: true, data: user });
 });
