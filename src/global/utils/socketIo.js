@@ -12,7 +12,11 @@ export const setupSocket = (server) => {
   io = new Server(server, {
     cors: {
       credentials: true,
-      origin: [getEnv("FRONTEND_URL"), "https://apply-super-quick.vercel.app"],
+      origin: [
+        getEnv("FRONTEND_URL"),
+        "https://apply-super-quick.vercel.app",
+        "https://apply-super-quick-client.vercel.app",
+      ],
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     },
   });
