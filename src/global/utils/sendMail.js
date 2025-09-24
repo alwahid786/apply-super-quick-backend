@@ -4,7 +4,7 @@ import { getEnv } from "../../configs/config.js";
 const transporter = nodemailer.createTransport({
   host: getEnv("NODEMAILER_HOST"),
   port: parseInt(getEnv("NODEMAILER_PORT")),
-  // secure: getEnv("NODE_ENV") !== "development",
+  secure: getEnv("NODE_ENV") !== "development",
   auth: {
     user: getEnv("NODEMAILER_USER"),
     pass: getEnv("NODEMAILER_PASSWORD"),
