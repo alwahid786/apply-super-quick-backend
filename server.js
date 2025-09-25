@@ -10,7 +10,11 @@ const port = getEnv("PORT");
 const server = http.createServer(app);
 // Setup Socket.IO
 setupSocket(server);
-console.log("a gai aaa")(async () => {
+console.log("a gai aaa");
+console.log("a gai aaa");
+console.log("a gai aaa");
+console.log("a gai aaa");
+(async () => {
   await configureCloudinary();
   await connectDB(getEnv("MONGODB_URL"));
   // await addAllNewPermissionsInDb();
