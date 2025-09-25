@@ -1,0 +1,24 @@
+name: Deploy Apply Super Quick Backend
+
+on:
+  push:
+    branches:
+      - main  # Change if you want another branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_KEY }}
+        script: |
+          cd /root/asq
+          ./deploy.sh
